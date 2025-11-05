@@ -10,6 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.16/jspdf.plugin.autotable.min.js"></script>
@@ -283,6 +284,11 @@
                             <div>
                                 <label for="receta-caracteristicas" class="block text-sm font-medium text-gray-700 mb-1">Características</label>
                                 <textarea id="receta-caracteristicas" rows="2" placeholder="Ej: Relajante y floral" class="input-field"></textarea>
+                            </div>
+                            <div>
+                                <label for="receta-imagen" class="block text-sm font-medium text-gray-700 mb-1">Foto del Producto</label>
+                                <input type="file" id="receta-imagen" class="input-field" accept="image/*">
+                                <img id="imagen-preview" src="" alt="Vista previa de la imagen" class="mt-4 rounded-lg max-h-48 hidden"/>
                             </div>
                         </div>
                     </div>
@@ -700,6 +706,7 @@
             firebase.initializeApp(firebaseConfig);
             const auth = firebase.auth();
             const db = firebase.firestore();
+            const storage = firebase.storage();
 
             // =================================================================
             // 2. VARIABLES GLOBALES DE ESTADO
@@ -744,6 +751,8 @@
             // --- Calculadora de Recetas
             const inputRecetaNombre = document.getElementById('receta-nombre');
             const inputRecetaCaracteristicas = document.getElementById('receta-caracteristicas');
+            const inputRecetaImagen = document.getElementById('receta-imagen');
+            const imagenPreview = document.getElementById('imagen-preview');
             const selectorIngrediente = document.getElementById('ingrediente');
             const inputCantidad = document.getElementById('cantidad');
             const btnAgregar = document.getElementById('agregar-btn');
@@ -1014,7 +1023,7 @@
             }
 
             // --- Funciones del Catálogo ---
-            function guardarEnCatalogo() {
+            async function guardarEnCatalogo() {
                 if (!currentUser) return alert('Debes iniciar sesión para guardar en el catálogo.');
                 
                 const nombre = inputRecetaNombre.value.trim();
@@ -1027,6 +1036,22 @@
                     return;
                 }
 
+                let imagenUrl = null;
+                const file = inputRecetaImagen.files[0];
+
+                if (file) {
+                    const filePath = `usuarios/${currentUser.uid}/catalogo_imagenes/${Date.now()}_${file.name}`;
+                    const fileRef = storage.ref(filePath);
+                    try {
+                        await fileRef.put(file);
+                        imagenUrl = await fileRef.getDownloadURL();
+                    } catch (error) {
+                        console.error("Error al subir la imagen: ", error);
+                        alert("Hubo un error al subir la imagen. No se pudo guardar la vela.");
+                        return;
+                    }
+                }
+
                 const nuevaVela = {
                     nombre: nombre,
                     caracteristicas: inputRecetaCaracteristicas.value.trim(),
@@ -1036,7 +1061,8 @@
                     pctGastoProduccion: parseFloat(inputGastoProduccionPct.value) || 0,
                     margenGananciaMinorista: parseFloat(inputGananciaMinorista.value) || 0,
                     margenGananciaMayorista: parseFloat(inputGananciaMayorista.value) || 0,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    ...(imagenUrl && { imagenUrl: imagenUrl })
                 };
 
                 db.collection('usuarios').doc(currentUser.uid).collection('catalogo').add(nuevaVela)
@@ -1069,24 +1095,31 @@
 
                 itemsPagina.forEach(vela => {
                     const card = document.createElement('div');
-                    card.className = 'card';
+                    card.className = 'card flex flex-col'; // Added flex-col for better structure
 
                     const costoTotal = calcularCostoTotalVela(vela);
                     const precioVentaMinorista = costoTotal * (1 + (vela.margenGananciaMinorista || 0) / 100);
                     const precioVentaMayorista = costoTotal * (1 + (vela.margenGananciaMayorista || 0) / 100);
 
+                    const imagenHtml = vela.imagenUrl 
+                        ? `<img src="${vela.imagenUrl}" alt="${vela.nombre}" class="w-full h-40 object-cover rounded-t-lg mb-4">`
+                        : '<div class="w-full h-40 bg-gray-200 rounded-t-lg flex items-center justify-center mb-4"><span class="text-gray-500 text-sm">Sin imagen</span></div>';
+
                     card.innerHTML = `
-                        <div class="flex justify-between items-start">
-                            <h3 class="text-lg font-bold text-gray-800">${vela.nombre}</h3>
-                            <button class="btn-danger btn-sm btn-borrar" data-id="${vela.id}">X</button>
+                        ${imagenHtml}
+                        <div class="p-4 flex-grow flex flex-col">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-lg font-bold text-gray-800">${vela.nombre}</h3>
+                                <button class="btn-danger btn-sm btn-borrar flex-shrink-0" data-id="${vela.id}">X</button>
+                            </div>
+                            <p class="text-sm text-gray-500 mb-3 flex-grow">${vela.caracteristicas || ''}</p>
+                            <div class="space-y-2 mt-auto">
+                                <div class="flex justify-between text-sm"><span>Costo:</span><span class="font-medium">$${costoTotal.toFixed(2)}</span></div>
+                                <div class="flex justify-between text-lg font-bold text-indigo-600 mt-2 pt-2 border-t"><span>Minorista:</span><span>$${precioVentaMinorista.toFixed(2)}</span></div>
+                                <div class="flex justify-between text-lg font-bold text-teal-600"><span>Mayorista:</span><span>$${precioVentaMayorista.toFixed(2)}</span></div>
+                            </div>
+                            <div class="text-center mt-4"><button class="text-indigo-600 hover:text-indigo-800 font-semibold text-sm btn-ver-detalles" data-id="${vela.id}">Ver Detalles</button></div>
                         </div>
-                        <p class="text-sm text-gray-500 mb-3">${vela.caracteristicas || ''}</p>
-                        <div class="space-y-2">
-                            <div class="flex justify-between text-sm"><span>Costo:</span><span class="font-medium">$${costoTotal.toFixed(2)}</span></div>
-                            <div class="flex justify-between text-lg font-bold text-indigo-600 mt-2 pt-2 border-t"><span>Minorista:</span><span>$${precioVentaMinorista.toFixed(2)}</span></div>
-                            <div class="flex justify-between text-lg font-bold text-teal-600"><span>Mayorista:</span><span>$${precioVentaMayorista.toFixed(2)}</span></div>
-                        </div>
-                        <div class="text-center mt-4"><button class="text-indigo-600 hover:text-indigo-800 font-semibold text-sm btn-ver-detalles" data-id="${vela.id}">Ver Detalles</button></div>
                     `;
                     catalogoContainer.appendChild(card);
                 });
@@ -1135,16 +1168,19 @@
                 if (!currentUser) return;
                 const velaIndex = catalogo.findIndex(v => v.id === id);
                 if (velaIndex > -1) {
-                    const velaNombre = catalogo[velaIndex].nombre;
-                    if (confirm(`¿Estás seguro de que quieres eliminar '${velaNombre}' del catálogo?`)) {
-                        db.collection('usuarios').doc(currentUser.uid).collection('catalogo').doc(id).delete()
+                    const vela = catalogo[velaIndex];
+                    if (confirm(`¿Estás seguro de que quieres eliminar '${vela.nombre}' del catálogo?`)) {
+                        const deletePromise = db.collection('usuarios').doc(currentUser.uid).collection('catalogo').doc(id).delete();
+                        const imageDeletePromise = vela.imagenUrl ? storage.refFromURL(vela.imagenUrl).delete() : Promise.resolve();
+
+                        Promise.all([deletePromise, imageDeletePromise])
                             .then(() => {
                                 catalogo.splice(velaIndex, 1);
                                 renderizarCatalogo();
                             })
                             .catch(error => {
                                 console.error("Error al eliminar del catálogo: ", error);
-                                alert("Hubo un error al eliminar la vela.");
+                                alert("Hubo un error al eliminar la vela. Es posible que la imagen no se haya borrado si el producto ya no existía.");
                             });
                     }
                 }
@@ -1760,6 +1796,9 @@
                 gastosAdicionales = [];
                 inputRecetaNombre.value = '';
                 inputRecetaCaracteristicas.value = '';
+                inputRecetaImagen.value = '';
+                imagenPreview.classList.add('hidden');
+                imagenPreview.src = '';
                 renderizarReceta();
                 renderizarGastos();
             });
@@ -1769,6 +1808,21 @@
             inputGastoPerdidaPct.addEventListener('input', calcularTotales);
             inputGastoProduccionPct.addEventListener('input', calcularTotales);
             btnGuardarCatalogo.addEventListener('click', guardarEnCatalogo);
+
+            inputRecetaImagen.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        imagenPreview.src = event.target.result;
+                        imagenPreview.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    imagenPreview.src = '';
+                    imagenPreview.classList.add('hidden');
+                }
+            });
 
             // --- Catálogo y Modales
             catalogoContainer.addEventListener('click', (e) => {
