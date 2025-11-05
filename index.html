@@ -542,6 +542,10 @@
                                     <span id="propuesta-subtotal">$0.00</span>
                                 </div>
                                 <div class="grid grid-cols-2 gap-4 items-center border-t pt-4">
+                                    <label for="propuesta-impuesto-pct" class="text-sm font-medium">Impuestos (%)</label>
+                                    <input type="number" id="propuesta-impuesto-pct" value="16" class="input-field text-right">
+                                </div>
+                                <div class="grid grid-cols-2 gap-4 items-center">
                                     <label for="propuesta-descuento" class="text-sm font-medium">Descuento ($)</label>
                                     <input type="number" id="propuesta-descuento" value="0" class="input-field text-right">
                                 </div>
@@ -550,6 +554,10 @@
                                     <input type="number" id="propuesta-envio" value="0" class="input-field text-right">
                                 </div>
                                 <div class="border-t pt-4 space-y-2">
+                                     <div class="flex justify-between items-center text-sm">
+                                        <span>Impuestos</span>
+                                        <span id="propuesta-impuesto-resumen">$0.00</span>
+                                    </div>
                                      <div class="flex justify-between items-center text-sm">
                                         <span>Descuento</span>
                                         <span id="propuesta-descuento-resumen" class="text-red-600">-$0.00</span>
@@ -779,6 +787,8 @@
             const canvasFirma = document.getElementById('propuesta-firma-canvas');
             const btnLimpiarFirma = document.getElementById('propuesta-limpiar-firma-btn');
             const inputPropuestaFirmanteNombre = document.getElementById('propuesta-firmante-nombre');
+            const inputImpuestoPct = document.getElementById('propuesta-impuesto-pct');
+            const elImpuestoResumen = document.getElementById('propuesta-impuesto-resumen');
             const inputDescuento = document.getElementById('propuesta-descuento');
             const inputEnvio = document.getElementById('propuesta-envio');
             const elSubtotalPropuesta = document.getElementById('propuesta-subtotal');
@@ -1340,11 +1350,15 @@
 
             function calcularTotalesPropuesta() {
                 const subtotal = propuestaActual.pedido.reduce((total, p) => total + p.total, 0);
+                const impuestoPct = parseFloat(inputImpuestoPct.value) || 0;
                 const descuento = parseFloat(inputDescuento.value) || 0;
                 const envio = parseFloat(inputEnvio.value) || 0;
-                const total = subtotal - descuento + envio;
+
+                const montoImpuesto = subtotal * (impuestoPct / 100);
+                const total = subtotal + montoImpuesto - descuento + envio;
 
                 elSubtotalPropuesta.textContent = `$${subtotal.toFixed(2)}`;
+                elImpuestoResumen.textContent = `$${montoImpuesto.toFixed(2)}`;
                 elDescuentoResumen.textContent = `-$${descuento.toFixed(2)}`;
                 elEnvioResumen.textContent = `$${envio.toFixed(2)}`;
                 elTotalPropuesta.textContent = `$${total.toFixed(2)}`;
@@ -1358,6 +1372,7 @@
                 inputPropuestaCantidad.value = '1';
                 textareaObservaciones.value = '';
                 inputPropuestaFirmanteNombre.value = '';
+                inputImpuestoPct.value = '16';
                 inputDescuento.value = '0';
                 inputEnvio.value = '0';
                 const ctx = canvasFirma.getContext('2d');
@@ -1377,7 +1392,7 @@
                     pedido: [...propuestaActual.pedido],
                     observaciones: textareaObservaciones.value,
                     firmante: inputPropuestaFirmanteNombre.value,
-                    costos: { descuento: parseFloat(inputDescuento.value) || 0, envio: parseFloat(inputEnvio.value) || 0, subtotal: parseFloat(elSubtotalPropuesta.textContent.replace('$', '')), total: parseFloat(elTotalPropuesta.textContent.replace('$', '')) },
+                    costos: { impuestoPct: parseFloat(inputImpuestoPct.value) || 0, montoImpuesto: parseFloat(elImpuestoResumen.textContent.replace('$', '')), descuento: parseFloat(inputDescuento.value) || 0, envio: parseFloat(inputEnvio.value) || 0, subtotal: parseFloat(elSubtotalPropuesta.textContent.replace('$', '')), total: parseFloat(elTotalPropuesta.textContent.replace('$', '')) },
                     firmaDataUrl: canvasFirma.toDataURL(),
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 };
@@ -1440,6 +1455,7 @@
                 propuestaActual.pedido = [...propuesta.pedido];
                 textareaObservaciones.value = propuesta.observaciones;
                 inputPropuestaFirmanteNombre.value = propuesta.firmante;
+                inputImpuestoPct.value = propuesta.costos.impuestoPct !== undefined ? propuesta.costos.impuestoPct : 16;
                 inputDescuento.value = propuesta.costos.descuento;
                 inputEnvio.value = propuesta.costos.envio;
 
@@ -1771,6 +1787,7 @@
             btnPropuestaAgregarProducto.addEventListener('click', agregarProductoAPropuesta);
             inputDescuento.addEventListener('input', calcularTotalesPropuesta);
             inputEnvio.addEventListener('input', calcularTotalesPropuesta);
+            inputImpuestoPct.addEventListener('input', calcularTotalesPropuesta);
             btnLimpiarPropuesta.addEventListener('click', limpiarPropuesta);
             btnGenerarPDFPropuesta.addEventListener('click', generarPDFPropuesta);
             btnGuardarPropuesta.addEventListener('click', guardarPropuesta);
