@@ -882,6 +882,7 @@
                 } else if (seccion === 'propuesta') {
                     seccionPropuesta.classList.remove('hidden');
                     tabPropuesta.classList.add('active');
+                    poblarSelectorProductosPropuesta();
                 } else if (seccion === 'insumos') {
                     seccionInsumos.classList.remove('hidden');
                     tabInsumos.classList.add('active');
@@ -1257,6 +1258,20 @@
                 const unaSemanaDespues = new Date();
                 unaSemanaDespues.setDate(unaSemanaDespues.getDate() + 7);
                 inputPropuestaValidez.value = unaSemanaDespues.toLocaleDateString('es-ES', opcionesFecha);
+            }
+
+            function poblarSelectorProductosPropuesta() {
+                selectPropuestaProducto.innerHTML = '<option value="">Seleccione un producto...</option>';
+                catalogo.forEach(vela => {
+                    const costoTotal = calcularCostoTotalVela(vela);
+                    const precioVentaMinorista = costoTotal * (1 + (vela.margenGananciaMinorista || 0) / 100);
+
+                    const option = document.createElement('option');
+                    option.value = vela.id;
+                    option.textContent = `${vela.nombre} - $${precioVentaMinorista.toFixed(2)}`;
+                    option.dataset.precio = precioVentaMinorista.toFixed(2);
+                    selectPropuestaProducto.appendChild(option);
+                });
             }
 
             function calcularPrecioVela(vela) {
