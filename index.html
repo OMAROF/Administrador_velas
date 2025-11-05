@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Velas Artesanales</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.16/jspdf.plugin.autotable.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .btn-primary {
+            background-color: #4f46e5;
+            color: white;
+            font-weight: 500;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-size: 1rem; /* text-base */
+            transition: background-color 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca;
+        }
+        .btn-secondary {
+            background-color: #10b981;
+            color: white;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 1rem; /* text-base */
+            transition: background-color 0.2s;
+        }
+        .btn-secondary:hover {
+            background-color: #059669;
+        }
+         .btn-download {
+            background-color: #3b82f6;
+            color: white;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 1rem; /* text-base */
+            transition: background-color 0.2s;
+        }
+        .btn-download:hover {
+            background-color: #2563eb;
+        }
+        .btn-neutral {
+            background-color: #6b7280;
+            color: white;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 1rem; /* text-base */
+            transition: background-color 0.2s;
+        }
+        .btn-neutral:hover {
+            background-color: #4b5563;
+        }
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+            font-weight: 500;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem; /* text-sm */
+            transition: background-color 0.2s;
+        }
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+        .btn-xs {
+            padding: 0.125rem 0.375rem; /* 2px 6px */
+            font-size: 0.75rem; /* text-xs */
+            border-radius: 0.375rem;
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem; /* text-base */
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px #c7d2fe;
+        }
+        .table-header {
+            background-color: #f3f4f6;
+            color: #4b5563;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .summary-card {
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-radius: 0.5rem 0.5rem 0 0;
+            font-weight: 600;
+            background-color: #e5e7eb;
+            color: #4b5563;
+            transition: all 0.2s;
+        }
+        .tab:hover {
+            background-color: #d1d5db;
+        }
+        .tab.active {
+            background-color: white;
+            color: #4f46e5;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            max-width: 90%;
+            width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: none;
+            border: none;
+            font-size: 1.75rem;
+            line-height: 1;
+            cursor: pointer;
+            color: #9ca3af;
+            padding: 0.5rem;
+        }
+        .modal-close-btn:hover {
+            color: #1f2937;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 antialiased text-gray-800">
+
+    <!-- Contenedor de Autenticación -->
+    <div id="auth-container" class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-md">
+        <div class="card">
+            <h2 id="auth-title" class="text-2xl font-bold text-center mb-6">Iniciar Sesión</h2>
+            
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="login-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="login-email" class="input-field" required="">
+                </div>
+                <div>
+                    <label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                    <input type="password" id="login-password" class="input-field" required="">
+                </div>
+                <p id="auth-error" class="text-sm text-red-600 hidden"></p>
+                <button type="submit" class="btn-primary w-full">Iniciar Sesión</button>
+            </form>
+
+            <form id="register-form" class="space-y-4 hidden">
+                <div>
+                    <label for="register-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="register-email" class="input-field" required="">
+                </div>
+                <div>
+                    <label for="register-password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña (mínimo 6 caracteres)</label>
+                    <input type="password" id="register-password" class="input-field" required="">
+                </div>
+                <button type="submit" class="btn-primary w-full">Crear Cuenta</button>
+            </form>
+
+            <div class="relative my-4">
+                <div class="absolute inset-0 flex items-center">
+                    <div class="w-full border-t border-gray-300"></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                    <span class="px-2 bg-white text-gray-500">O continúa con</span>
+                </div>
+            </div>
+
+            <div>
+                <button type="button" id="google-signin-btn" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48px" height="48px"><path fill="#4285F4" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24s8.955,20,20,20s20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"></path><path fill="#34A853" d="M24,44c5.166,0,9.86-1.977,13.257-5.256l-6.522-5.025C28.506,35.593,26.38,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.506,39.58,16.227,44,24,44z"></path><path fill="#FBBC05" d="M12.717,28.083c-0.599-1.802-0.599-3.754,0-5.556l-6.522-5.025C4.146,20.123,3,23.83,3,28c0,4.17,1.146,7.877,3.195,10.475L12.717,28.083z"></path><path fill="#EA4335" d="M24,12c2.956,0,5.482,1.088,7.336,2.826l6.044-6.044C34.396,4.182,29.632,2,24,2C16.227,2,9.506,6.42,6.195,12.525l6.522,5.025C14.381,15.317,18.798,12,24,12z"></path></svg>
+                    <span>Iniciar sesión con Google</span>
+                </button>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="#" id="toggle-auth-mode" class="text-sm text-indigo-600 hover:underline">¿No tienes cuenta? Regístrate</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedor Principal de la App (inicialmente oculto) -->
+    <div id="app-container" class="hidden">
+        <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
+            <header class="mb-8">
+                <div class="flex flex-col md:flex-row md:justify-between md:items-center">
+                    <div class="text-center md:text-left">
+                        <h1 class="text-3xl font-bold text-gray-900">Gestor de Velas Artesanales</h1>
+                        <p class="mt-2 text-lg text-gray-600">Calcula costos y administra tu catálogo de productos.</p>
+                    </div>
+                    <div class="mt-4 md:mt-0 flex items-center justify-center flex-shrink-0">
+                        <span id="user-email" class="text-sm text-gray-600 mr-4 truncate"></span>
+                        <button id="logout-btn" class="btn-danger flex-shrink-0">Cerrar Sesión</button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Pestañas de Navegación -->
+            <div class="mb-8">
+                <nav class="flex space-x-2" aria-label="Tabs">
+                    <button id="tab-catalogo" class="tab">Catálogo</button>
+                    <button id="tab-agregar-producto" class="tab">Agregar producto</button>
+                    <button id="tab-propuesta" class="tab">Propuesta de Venta</button>
+                    <button id="tab-insumos" class="tab">Mis Insumos</button>
+                </nav>
+            </div>
+
+            <!-- Sección del Catálogo -->
+            <div id="seccion-catalogo">
+                <div id="catalogo-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Las tarjetas del catálogo se insertarán aquí -->
+                     <p id="catalogo-vacio-msg" class="text-center text-gray-500 col-span-full">El catálogo está vacío. Guarda una receta desde la sección 'Agregar producto' para empezar.</p>
+                </div>
+                <div id="catalogo-paginacion" class="flex justify-center items-center space-x-4 mt-8">
+                    <!-- Los controles de paginación se insertarán aquí -->
+                </div>
+            </div>
+
+            <!-- Sección de Agregar Producto -->
+            <div id="seccion-agregar-producto" class="hidden">
+                <main class="grid grid-cols-1 lg:grid-cols-2 lg:gap-8">
+                     <!-- Columna Izquierda: Ingredientes y Receta -->
+                <div>
+                     <!-- Sección para Información de la receta -->
+                     <div class="card">
+                        <h2 class="text-xl font-semibold mb-4">Información de la Receta</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="receta-nombre" class="block text-sm font-medium text-gray-700 mb-1">Nombre de la Receta</label>
+                                <input type="text" id="receta-nombre" placeholder="Ej: Vela Aromática de Lavanda" class="input-field">
+                            </div>
+                            <div>
+                                <label for="receta-caracteristicas" class="block text-sm font-medium text-gray-700 mb-1">Características</label>
+                                <textarea id="receta-caracteristicas" rows="2" placeholder="Ej: Relajante y floral" class="input-field"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección para agregar ingredientes -->
+                    <div class="card">
+                        <h2 class="text-xl font-semibold mb-4">Paso 1: Agrega los Ingredientes</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                            <div class="md:col-span-2">
+                                <label for="ingrediente" class="block text-sm font-medium text-gray-700 mb-1">Ingrediente</label>
+                                <select id="ingrediente" class="input-field"></select>
+                            </div>
+                            <div>
+                                <label for="cantidad" class="block text-sm font-medium text-gray-700 mb-1">Cantidad (g/ml)</label>
+                                <input type="number" id="cantidad" placeholder="Ej: 100" class="input-field">
+                            </div>
+                            <div class="md:col-span-2">
+                                <button id="agregar-btn" class="btn-primary w-full">Agregar a la Receta</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de la receta actual -->
+                    <div class="card">
+                        <h2 class="text-xl font-semibold mb-4">Paso 2: Revisa tu Receta</h2>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200 table-fixed w-full">
+                                <thead class="table-header">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium tracking-wider">Ingrediente</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium tracking-wider">Cant. (g/ml/pz)</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium tracking-wider">%</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium tracking-wider">Costo</th>
+                                        <th class="relative px-4 py-3 w-16"><span class="sr-only">Eliminar</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="lista-receta" class="bg-white divide-y divide-gray-200">
+                                    <tr id="fila-vacia-receta">
+                                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">Aún no has agregado ingredientes.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna Derecha: Gastos y Precio Final -->
+                <div>
+                    <!-- Sección para gastos adicionales -->
+                    <div class="card">
+                        <h2 class="text-xl font-semibold mb-4">Paso 3: Agrega Gastos Adicionales</h2>
+                        <div class="space-y-4">
+                            <div class="border-b border-gray-200 pb-4">
+                                <h3 class="text-lg font-medium text-gray-800 mb-2">Gastos Fijos (%)</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="gasto-perdida-pct" class="block text-sm font-medium text-gray-700">Costos por perdida (%)</label>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <input type="number" id="gasto-perdida-pct" value="5" class="input-field w-24">
+                                            <span id="gasto-perdida-monto" class="text-sm text-gray-600 font-medium">$0.00</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="gasto-produccion-pct" class="block text-sm font-medium text-gray-700">Costos de produccion (%)</label>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <input type="number" id="gasto-produccion-pct" value="20" class="input-field w-24">
+                                            <span id="gasto-produccion-monto" class="text-sm text-gray-600 font-medium">$0.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="pt-4">
+                                <h3 class="text-lg font-medium text-gray-800 mb-2">Gastos Manuales</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                                    <div class="md:col-span-2">
+                                        <label for="gasto-descripcion" class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                                        <input type="text" id="gasto-descripcion" placeholder="Ej: Etiquetas" class="input-field">
+                                    </div>
+                                    <div>
+                                        <label for="gasto-monto" class="block text-sm font-medium text-gray-700 mb-1">Monto ($)</label>
+                                        <input type="number" id="gasto-monto" placeholder="Ej: 15" class="input-field">
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <button id="agregar-gasto-btn" class="btn-secondary w-full">Agregar Gasto</button>
+                                    </div>
+                                </div>
+                                <div class="overflow-x-auto mt-4">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="table-header">
+                                            <tr>
+                                                <th class="px-4 py-3 text-left text-xs font-medium tracking-wider">Descripción</th>
+                                                <th class="px-4 py-3 text-left text-xs font-medium tracking-wider">Monto</th>
+                                                <th class="relative px-4 py-3"><span class="sr-only">Eliminar</span></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="lista-gastos" class="bg-white divide-y divide-gray-200">
+                                            <tr id="fila-vacia-gastos">
+                                                <td colspan="3" class="px-6 py-4 text-center text-gray-500">Aún no has agregado gastos.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de cálculo de precio final -->
+                    <div class="card">
+                         <h2 class="text-xl font-semibold mb-4">Paso 4: Calcula el Precio Final</h2>
+                         <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <label for="ganancia-minorista" class="block text-sm font-medium text-gray-700">Margen Minorista (%)</label>
+                                <input type="number" id="ganancia-minorista" value="150" class="input-field mt-1">
+                            </div>
+                            <div>
+                                <label for="ganancia-mayorista" class="block text-sm font-medium text-gray-700">Margen Mayorista (%)</label>
+                                <input type="number" id="ganancia-mayorista" value="100" class="input-field mt-1">
+                            </div>
+                        </div>
+                        <div class="summary-card mt-6 space-y-4">
+                            <div class="flex justify-between items-center">
+                                <p class="text-sm text-gray-600">Costo Total Producción:</p>
+                                <p id="costo-total-produccion" class="text-lg font-semibold text-gray-900">$0.00</p>
+                            </div>
+                            <div class="border-t border-gray-200 pt-4 mt-4">
+                                <p class="text-sm font-semibold text-indigo-600">PRECIO VENTA MINORISTA:</p>
+                                <p id="precio-final-minorista" class="text-2xl font-extrabold text-indigo-700">$0.00</p>
+                            </div>
+                            <div class="border-t border-gray-200 pt-4 mt-4">
+                                <p class="text-sm font-semibold text-teal-600">PRECIO VENTA MAYORISTA:</p>
+                                <p id="precio-final-mayorista" class="text-2xl font-extrabold text-teal-700">$0.00</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row justify-center items-center gap-4 mt-[-1rem]">
+                        <button id="nuevo-registro-btn" class="btn-neutral w-full sm:w-auto">Nuevo Registro</button>
+                        <button id="descargar-reporte-btn" class="btn-download w-full sm:w-auto">Descargar PDF</button>
+                        <button id="guardar-catalogo-btn" class="btn-primary w-full sm:w-auto">Guardar en Catálogo</button>
+                    </div>
+                </div>
+                </main>
+            </div>
+
+            <!-- Sección de Propuesta de Venta -->
+            <div id="seccion-propuesta" class="hidden">
+                <!-- ... (contenido de la sección propuesta) ... -->
+            </div>
+
+            <!-- Sección de Gestión de Insumos -->
+            <div id="seccion-insumos" class="hidden">
+                <div class="card">
+                    <h2 class="text-2xl font-bold mb-6">Gestionar Mis Insumos</h2>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Columna del Formulario -->
+                        <div class="lg:col-span-1">
+                            <form id="form-insumo" class="space-y-4 p-4 border rounded-lg bg-gray-50">
+                                <h3 id="form-insumo-titulo" class="text-xl font-semibold">Agregar Nuevo Insumo</h3>
+                                <input type="hidden" id="insumo-id">
+                                <div>
+                                    <label for="insumo-nombre" class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                                    <input type="text" id="insumo-nombre" class="input-field" required>
+                                </div>
+                                <div>
+                                    <label for="insumo-precio" class="block text-sm font-medium text-gray-700 mb-1">Precio (por g/ml/pz)</label>
+                                    <input type="number" id="insumo-precio" step="0.01" class="input-field" required>
+                                </div>
+                                <div>
+                                    <label for="insumo-categoria" class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+                                    <input type="text" id="insumo-categoria" class="input-field" required>
+                                </div>
+                                <div class="flex gap-4">
+                                    <button type="submit" id="btn-guardar-insumo" class="btn-primary w-full">Guardar</button>
+                                    <button type="button" id="btn-cancelar-edicion-insumo" class="btn-neutral w-full hidden">Cancelar</button>
+                                </div>
+                            </form>
+                        </div>
+                        <!-- Columna de la Tabla -->
+                        <div class="lg:col-span-2">
+                            <div class="overflow-y-auto" style="max-height: 60vh;">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="table-header sticky top-0">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-medium tracking-wider">Nombre</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium tracking-wider">Precio</th>
+                                            <th class="px-4 py-3 text-left text-xs font-medium tracking-wider">Categoría</th>
+                                            <th class="relative px-4 py-3"><span class="sr-only">Acciones</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tabla-insumos" class="bg-white divide-y divide-gray-200">
+                                        <!-- Los insumos se insertarán aquí -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Modal para Detalles de Vela -->
+    <div id="detalle-modal-overlay" class="modal-overlay hidden">
+        <div class="modal-content relative">
+            <button id="modal-close-btn" class="modal-close-btn">&times;</button>
+            <div id="detalle-modal-content"></div>
+        </div>
+    </div>
+
+    <!-- Modal para Lista de Propuestas Guardadas -->
+    <div id="lista-propuestas-modal-overlay" class="modal-overlay hidden">
+        <div class="modal-content relative">
+            <button id="lista-propuestas-modal-close-btn" class="modal-close-btn">&times;</button>
+            <h2 class="text-2xl font-bold mb-4">Propuestas Guardadas</h2>
+            <div id="lista-propuestas-container" class="overflow-y-auto" style="max-height: 70vh;">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="table-header">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium tracking-wider">#</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium tracking-wider">Cliente</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium tracking-wider">Fecha</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium tracking-wider">Total</th>
+                            <th class="relative px-4 py-3"><span class="sr-only">Acciones</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-propuestas-guardadas" class="bg-white divide-y divide-gray-200">
+                        <!-- Las filas de propuestas se insertarán aquí -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // =================================================================
+            // 1. INICIALIZACIÓN Y CONFIGURACIÓN
+            // =================================================================
+            const firebaseConfig = {
+                apiKey: "AIzaSyCHGc-cNmZoP_ieRCP6Qxr-EG8QGGU7LgU",
+                authDomain: "adminvelas.firebaseapp.com",
+                projectId: "adminvelas",
+                storageBucket: "adminvelas.firebasestorage.app",
+                messagingSenderId: "765865245335",
+                appId: "1:765865245335:web:f8bb3269151cdbce8607d2"
+            };
+
+            firebase.initializeApp(firebaseConfig);
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+
+            // =================================================================
+            // 2. VARIABLES GLOBALES DE ESTADO
+            // =================================================================
+            let currentUser = null;
+            let productos = [];
+            let receta = [];
+            let gastosAdicionales = [];
+            let catalogo = [];
+            let propuestasGuardadas = [];
+            let propuestaActual = { cliente: {}, detalles: {}, pedido: [], costos: {} };
+            let paginaActualCatalogo = 1;
+            const itemsPorPagina = 6;
+
+            // =================================================================
+            // 3. DECLARACIÓN DE ELEMENTOS DE LA UI
+            // =================================================================
+            // --- Contenedores principales
+            const authContainer = document.getElementById('auth-container');
+            const appContainer = document.getElementById('app-container');
+
+            // --- Autenticación
+            const loginForm = document.getElementById('login-form');
+            const registerForm = document.getElementById('register-form');
+            const toggleAuthLink = document.getElementById('toggle-auth-mode');
+            const authTitle = document.getElementById('auth-title');
+            const authError = document.getElementById('auth-error');
+            const logoutBtn = document.getElementById('logout-btn');
+            const userEmailSpan = document.getElementById('user-email');
+            const googleSignInBtn = document.getElementById('google-signin-btn');
+
+            // --- Pestañas y Secciones
+            const tabAgregarProducto = document.getElementById('tab-agregar-producto');
+            const tabCatalogo = document.getElementById('tab-catalogo');
+            const tabPropuesta = document.getElementById('tab-propuesta');
+            const tabInsumos = document.getElementById('tab-insumos');
+            const seccionAgregarProducto = document.getElementById('seccion-agregar-producto');
+            const seccionCatalogo = document.getElementById('seccion-catalogo');
+            const seccionPropuesta = document.getElementById('seccion-propuesta');
+            const seccionInsumos = document.getElementById('seccion-insumos');
+
+            // --- Calculadora de Recetas
+            const inputRecetaNombre = document.getElementById('receta-nombre');
+            const inputRecetaCaracteristicas = document.getElementById('receta-caracteristicas');
+            const selectorIngrediente = document.getElementById('ingrediente');
+            const inputCantidad = document.getElementById('cantidad');
+            const btnAgregar = document.getElementById('agregar-btn');
+            const listaReceta = document.getElementById('lista-receta');
+            const inputGastoDescripcion = document.getElementById('gasto-descripcion');
+            const inputGastoMonto = document.getElementById('gasto-monto');
+            const btnAgregarGasto = document.getElementById('agregar-gasto-btn');
+            const listaGastos = document.getElementById('lista-gastos');
+            const inputGastoPerdidaPct = document.getElementById('gasto-perdida-pct');
+            const inputGastoProduccionPct = document.getElementById('gasto-produccion-pct');
+            const elGastoPerdidaMonto = document.getElementById('gasto-perdida-monto');
+            const elGastoProduccionMonto = document.getElementById('gasto-produccion-monto');
+            const inputGananciaMinorista = document.getElementById('ganancia-minorista');
+            const inputGananciaMayorista = document.getElementById('ganancia-mayorista');
+            const elCostoTotalProduccion = document.getElementById('costo-total-produccion');
+            const elPrecioFinalMinorista = document.getElementById('precio-final-minorista');
+            const elPrecioFinalMayorista = document.getElementById('precio-final-mayorista');
+            const btnNuevoRegistro = document.getElementById('nuevo-registro-btn');
+            const btnDescargarReporte = document.getElementById('descargar-reporte-btn');
+            const btnGuardarCatalogo = document.getElementById('guardar-catalogo-btn');
+
+            // --- Catálogo
+            const catalogoContainer = document.getElementById('catalogo-container');
+            const catalogoVacioMsg = document.getElementById('catalogo-vacio-msg');
+            const modalOverlay = document.getElementById('detalle-modal-overlay');
+            const modalContent = document.getElementById('detalle-modal-content');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+
+            // --- Propuestas
+            const inputClienteNombre = document.getElementById('propuesta-cliente-nombre');
+            const inputClienteTelefono = document.getElementById('propuesta-cliente-telefono');
+            const inputClienteEmail = document.getElementById('propuesta-cliente-email');
+            const spanPropuestaNumero = document.getElementById('propuesta-numero');
+            const inputPropuestaFecha = document.getElementById('propuesta-fecha');
+            const inputPropuestaValidez = document.getElementById('propuesta-validez');
+            const selectPropuestaProducto = document.getElementById('propuesta-producto');
+            const inputPropuestaCantidad = document.getElementById('propuesta-cantidad');
+            const btnPropuestaAgregarProducto = document.getElementById('propuesta-agregar-producto-btn');
+            const listaProductosPropuesta = document.getElementById('propuesta-lista-productos');
+            const textareaObservaciones = document.getElementById('propuesta-observaciones');
+            const canvasFirma = document.getElementById('propuesta-firma-canvas');
+            const btnLimpiarFirma = document.getElementById('propuesta-limpiar-firma-btn');
+            const inputPropuestaFirmanteNombre = document.getElementById('propuesta-firmante-nombre');
+            const inputDescuento = document.getElementById('propuesta-descuento');
+            const inputEnvio = document.getElementById('propuesta-envio');
+            const elSubtotalPropuesta = document.getElementById('propuesta-subtotal');
+            const elDescuentoResumen = document.getElementById('propuesta-descuento-resumen');
+            const elEnvioResumen = document.getElementById('propuesta-envio-resumen');
+            const elTotalPropuesta = document.getElementById('propuesta-total');
+            const btnLimpiarPropuesta = document.getElementById('propuesta-limpiar-btn');
+            const btnGenerarPDFPropuesta = document.getElementById('propuesta-pdf-btn');
+            const btnGuardarPropuesta = document.getElementById('propuesta-guardar-btn');
+            const btnVerGuardadas = document.getElementById('propuesta-ver-guardadas-btn');
+            const listaPropuestasModalOverlay = document.getElementById('lista-propuestas-modal-overlay');
+            const listaPropuestasModalCloseBtn = document.getElementById('lista-propuestas-modal-close-btn');
+            const tablaPropuestasGuardadas = document.getElementById('tabla-propuestas-guardadas');
+
+            // --- Insumos
+            const tablaInsumos = document.getElementById('tabla-insumos');
+            const formInsumo = document.getElementById('form-insumo');
+            const formInsumoTitulo = document.getElementById('form-insumo-titulo');
+            const inputInsumoId = document.getElementById('insumo-id');
+            const inputInsumoNombre = document.getElementById('insumo-nombre');
+            const inputInsumoPrecio = document.getElementById('insumo-precio');
+            const inputInsumoCategoria = document.getElementById('insumo-categoria');
+            const btnGuardarInsumo = document.getElementById('btn-guardar-insumo');
+            const btnCancelarEdicionInsumo = document.getElementById('btn-cancelar-edicion-insumo');
+
+            // =================================================================
+            // 4. DEFINICIÓN DE FUNCIONES
+            // =================================================================
+
+            // --- Funciones de Inicialización y Carga ---
+            function inicializarAplicacion() {
+                cargarDatosDeUsuario();
+            }
+
+
+
+            // --- Funciones de Navegación y UI General ---
+            function cambiarSeccion(seccion) {
+                seccionAgregarProducto.classList.add('hidden');
+                seccionCatalogo.classList.add('hidden');
+                seccionPropuesta.classList.add('hidden');
+                seccionInsumos.classList.add('hidden');
+
+                tabAgregarProducto.classList.remove('active');
+                tabCatalogo.classList.remove('active');
+                tabPropuesta.classList.remove('active');
+                tabInsumos.classList.remove('active');
+
+                if (seccion === 'agregar-producto') {
+                    seccionAgregarProducto.classList.remove('hidden');
+                    tabAgregarProducto.classList.add('active');
+                } else if (seccion === 'propuesta') {
+                    seccionPropuesta.classList.remove('hidden');
+                    tabPropuesta.classList.add('active');
+                } else if (seccion === 'insumos') {
+                    seccionInsumos.classList.remove('hidden');
+                    tabInsumos.classList.add('active');
+                } else { // catalogo por defecto
+                    seccionCatalogo.classList.remove('hidden');
+                    tabCatalogo.classList.add('active');
+                }
+            }
+
+            // --- Funciones de la Calculadora ---
+            function poblarSelectorIngredientes() {
+                 try {
+                    const categorias = {};
+                    productos.forEach(producto => {
+                        if (!categorias[producto.categoria]) {
+                            categorias[producto.categoria] = [];
+                        }
+                        categorias[producto.categoria].push(producto);
+                    });
+                    selectorIngrediente.innerHTML = '';
+                    for (const categoria in categorias) {
+                        const optgroup = document.createElement('optgroup');
+                        optgroup.label = categoria;
+                        categorias[categoria].sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(producto => {
+                            const option = document.createElement('option');
+                            option.value = producto.nombre;
+                            option.textContent = `${producto.nombre} (${producto.precio_por_gramo.toFixed(2)} por g/ml/pz)`;
+                            optgroup.appendChild(option);
+                        });
+                        selectorIngrediente.appendChild(optgroup);
+                    }
+                } catch (error) {
+                    console.error('Error al inicializar selector de ingredientes:', error);
+                }
+            }
+
+            function renderizarReceta() {
+                listaReceta.innerHTML = '';
+                const baseCera = receta.find(item => item.nombre.toLowerCase().includes("cera"));
+                const cantidadBase = baseCera ? baseCera.cantidad : 0;
+
+                if (receta.length === 0) {
+                    listaReceta.innerHTML = `<tr id="fila-vacia-receta"><td colspan="5" class="px-6 py-4 text-center text-gray-500">Aún no has agregado ingredientes.</td></tr>`;
+                } else {
+                    receta.forEach((item, index) => {
+                        const tr = document.createElement('tr');
+                        let porcentajeContenido = (item.nombre.toLowerCase().includes("cera")) ? `<div class="text-sm font-semibold text-indigo-600">Base</div>`
+                            : (cantidadBase > 0) ? `<div class="text-sm text-gray-700">${((item.cantidad / cantidadBase) * 100).toFixed(2)}%</div>`
+                            : `<div class="text-sm text-gray-500">N/A</div>`;
+                        
+                        tr.innerHTML = `
+                            <td class="px-4 py-2"><div class="text-sm font-medium text-gray-900">${item.nombre}</div></td>
+                            <td class="px-4 py-2"><div class="text-sm text-gray-700">${item.cantidad} g/ml/pz</div></td>
+                            <td class="px-4 py-2">${porcentajeContenido}</td>
+                            <td class="px-4 py-2"><div class="text-sm text-gray-700">$${item.costo.toFixed(2)}</div></td>
+                            <td class="px-4 py-2 text-right"><button class="btn-danger btn-sm" data-index="${index}">X</button></td>`;
+                        listaReceta.appendChild(tr);
+                    });
+                }
+                calcularTotales();
+            }
+
+            function renderizarGastos() {
+                listaGastos.innerHTML = '';
+                if (gastosAdicionales.length === 0) {
+                    listaGastos.innerHTML = `<tr id="fila-vacia-gastos"><td colspan="3" class="px-6 py-4 text-center text-gray-500">Aún no has agregado gastos.</td></tr>`;
+                } else {
+                    gastosAdicionales.forEach((gasto, index) => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="px-4 py-2"><div class="text-sm font-medium text-gray-900">${gasto.descripcion}</div></td>
+                            <td class="px-4 py-2"><div class="text-sm text-gray-700">$${gasto.monto.toFixed(2)}</div></td>
+                            <td class="px-4 py-2 text-right"><button class="btn-danger btn-sm" data-index="${index}">X</button></td>`;
+                        listaGastos.appendChild(tr);
+                    });
+                }
+                calcularTotales();
+            }
+            
+            function calcularTotales() {
+                const costoIngredientes = receta.reduce((total, item) => total + item.costo, 0);
+                const costoGastosManuales = gastosAdicionales.reduce((total, gasto) => total + gasto.monto, 0);
+
+                const pctPerdida = parseFloat(inputGastoPerdidaPct.value) || 0;
+                const pctProduccion = parseFloat(inputGastoProduccionPct.value) || 0;
+                const sumaPorcentajes = (pctPerdida + pctProduccion) / 100;
+
+                const costoBaseParaCalculo = costoIngredientes + costoGastosManuales;
+                const costoTotalProduccion = (sumaPorcentajes < 1) ? costoBaseParaCalculo / (1 - sumaPorcentajes) : costoBaseParaCalculo;
+
+                const montoPerdida = costoTotalProduccion * (pctPerdida / 100);
+                const montoProduccion = costoTotalProduccion * (pctProduccion / 100);
+
+                elGastoPerdidaMonto.textContent = `$${montoPerdida.toFixed(2)}`;
+                elGastoProduccionMonto.textContent = `$${montoProduccion.toFixed(2)}`;
+
+                elCostoTotalProduccion.textContent = `$${costoTotalProduccion.toFixed(2)}`;
+
+                const margenMinorista = parseFloat(inputGananciaMinorista.value) || 0;
+                const precioVentaMinorista = costoTotalProduccion * (1 + margenMinorista / 100);
+                elPrecioFinalMinorista.textContent = `$${precioVentaMinorista.toFixed(2)}`;
+
+                const margenMayorista = parseFloat(inputGananciaMayorista.value) || 0;
+                const precioVentaMayorista = costoTotalProduccion * (1 + margenMayorista / 100);
+                elPrecioFinalMayorista.textContent = `$${precioVentaMayorista.toFixed(2)}`;
+            }
+
+            // --- Funciones del Catálogo ---
+            function guardarEnCatalogo() {
+                if (!currentUser) return alert('Debes iniciar sesión para guardar en el catálogo.');
+                
+                const nombre = inputRecetaNombre.value.trim();
+                if (!nombre) {
+                    alert('Por favor, asigna un nombre a la receta antes de guardarla.');
+                    return;
+                }
+                if (receta.length === 0) {
+                    alert('No puedes guardar una receta vacía.');
+                    return;
+                }
+
+                const nuevaVela = {
+                    nombre: nombre,
+                    caracteristicas: inputRecetaCaracteristicas.value.trim(),
+                    receta: [...receta],
+                    gastosAdicionales: [...gastosAdicionales],
+                    pctGastoPerdida: parseFloat(inputGastoPerdidaPct.value) || 0,
+                    pctGastoProduccion: parseFloat(inputGastoProduccionPct.value) || 0,
+                    margenGananciaMinorista: parseFloat(inputGananciaMinorista.value) || 0,
+                    margenGananciaMayorista: parseFloat(inputGananciaMayorista.value) || 0,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                db.collection('usuarios').doc(currentUser.uid).collection('catalogo').add(nuevaVela)
+                    .then(docRef => {
+                        catalogo.push({ id: docRef.id, ...nuevaVela });
+                        renderizarCatalogo();
+                        alert(`'${nombre}' se ha guardado en el catálogo.`);
+                        cambiarSeccion('catalogo');
+                    })
+                    .catch(error => {
+                        console.error("Error al guardar en catálogo: ", error);
+                        alert("Hubo un error al guardar la vela.");
+                    });
+            }
+
+            function renderizarCatalogo() {
+                catalogoContainer.innerHTML = '';
+                if (catalogo.length === 0) {
+                    catalogoVacioMsg.style.display = 'block';
+                    catalogoContainer.appendChild(catalogoVacioMsg);
+                    renderizarPaginacion();
+                    return;
+                }
+                
+                catalogoVacioMsg.style.display = 'none';
+
+                const inicio = (paginaActualCatalogo - 1) * itemsPorPagina;
+                const fin = inicio + itemsPorPagina;
+                const itemsPagina = catalogo.slice(inicio, fin);
+
+                itemsPagina.forEach(vela => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+
+                    const costoTotal = calcularCostoTotalVela(vela);
+                    const precioVentaMinorista = costoTotal * (1 + (vela.margenGananciaMinorista || 0) / 100);
+                    const precioVentaMayorista = costoTotal * (1 + (vela.margenGananciaMayorista || 0) / 100);
+
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <h3 class="text-lg font-bold text-gray-800">${vela.nombre}</h3>
+                            <button class="btn-danger btn-sm btn-borrar" data-id="${vela.id}">X</button>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-3">${vela.caracteristicas || ''}</p>
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-sm"><span>Costo:</span><span class="font-medium">$${costoTotal.toFixed(2)}</span></div>
+                            <div class="flex justify-between text-lg font-bold text-indigo-600 mt-2 pt-2 border-t"><span>Minorista:</span><span>$${precioVentaMinorista.toFixed(2)}</span></div>
+                            <div class="flex justify-between text-lg font-bold text-teal-600"><span>Mayorista:</span><span>$${precioVentaMayorista.toFixed(2)}</span></div>
+                        </div>
+                        <div class="text-center mt-4"><button class="text-indigo-600 hover:text-indigo-800 font-semibold text-sm btn-ver-detalles" data-id="${vela.id}">Ver Detalles</button></div>
+                    `;
+                    catalogoContainer.appendChild(card);
+                });
+
+                renderizarPaginacion();
+            }
+
+            function renderizarPaginacion() {
+                const paginacionContainer = document.getElementById('catalogo-paginacion');
+                paginacionContainer.innerHTML = '';
+                const totalPaginas = Math.ceil(catalogo.length / itemsPorPagina);
+
+                if (totalPaginas <= 1) return;
+
+                const btnAnterior = document.createElement('button');
+                btnAnterior.textContent = 'Anterior';
+                btnAnterior.className = 'btn-neutral';
+                btnAnterior.disabled = paginaActualCatalogo === 1;
+                btnAnterior.addEventListener('click', () => {
+                    if (paginaActualCatalogo > 1) {
+                        paginaActualCatalogo--;
+                        renderizarCatalogo();
+                    }
+                });
+                paginacionContainer.appendChild(btnAnterior);
+
+                const indicadorPagina = document.createElement('span');
+                indicadorPagina.className = 'text-lg font-medium';
+                indicadorPagina.textContent = `Página ${paginaActualCatalogo} de ${totalPaginas}`;
+                paginacionContainer.appendChild(indicadorPagina);
+
+                const btnSiguiente = document.createElement('button');
+                btnSiguiente.textContent = 'Siguiente';
+                btnSiguiente.className = 'btn-neutral';
+                btnSiguiente.disabled = paginaActualCatalogo === totalPaginas;
+                btnSiguiente.addEventListener('click', () => {
+                    if (paginaActualCatalogo < totalPaginas) {
+                        paginaActualCatalogo++;
+                        renderizarCatalogo();
+                    }
+                });
+                paginacionContainer.appendChild(btnSiguiente);
+            }
+
+            function borrarDelCatalogo(id) {
+                if (!currentUser) return;
+                const velaIndex = catalogo.findIndex(v => v.id === id);
+                if (velaIndex > -1) {
+                    const velaNombre = catalogo[velaIndex].nombre;
+                    if (confirm(`¿Estás seguro de que quieres eliminar '${velaNombre}' del catálogo?`)) {
+                        db.collection('usuarios').doc(currentUser.uid).collection('catalogo').doc(id).delete()
+                            .then(() => {
+                                catalogo.splice(velaIndex, 1);
+                                renderizarCatalogo();
+                            })
+                            .catch(error => {
+                                console.error("Error al eliminar del catálogo: ", error);
+                                alert("Hubo un error al eliminar la vela.");
+                            });
+                    }
+                }
+            }
+
+            function mostrarDetalles(id) {
+                const vela = catalogo.find(v => v.id === id);
+                if (!vela) return;
+
+                let recetaHtml = vela.receta.map((item, index) => `<tr><td class="px-4 py-2">${item.nombre}</td><td class="px-4 py-2"><input type="number" value="${item.cantidad}" class="input-field w-24" data-receta-index="${index}"></td><td class="px-4 py-2">$${item.costo.toFixed(2)}</td></tr>`).join('');
+                let gastosHtml = vela.gastosAdicionales.map((gasto, index) => `<tr><td class="px-4 py-2"><input type="text" value="${gasto.descripcion}" class="input-field w-full" data-gasto-desc-index="${index}"></td><td class="px-4 py-2"><input type="number" value="${gasto.monto}" class="input-field w-24" data-gasto-monto-index="${index}"></td></tr>`).join('');
+                const costoTotal = calcularCostoTotalVela(vela);
+                const precioVentaMinorista = costoTotal * (1 + (vela.margenGananciaMinorista || 0) / 100);
+                const precioVentaMayorista = costoTotal * (1 + (vela.margenGananciaMayorista || 0) / 100);
+
+                modalContent.innerHTML = `
+                    <h2 class="text-2xl font-bold mb-2">${vela.nombre}</h2>
+                    <div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-1">Características</label><textarea id="modal-caracteristicas" class="input-field w-full" rows="2">${vela.caracteristicas || ''}</textarea></div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div><label for="modal-gasto-perdida-pct" class="block text-sm font-medium text-gray-700">Costos por perdida (%)</label><input type="number" id="modal-gasto-perdida-pct" value="${vela.pctGastoPerdida || 0}" class="input-field mt-1"></div>
+                        <div><label for="modal-gasto-produccion-pct" class="block text-sm font-medium text-gray-700">Costos de produccion (%)</label><input type="number" id="modal-gasto-produccion-pct" value="${vela.pctGastoProduccion || 0}" class="input-field mt-1"></div>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2">Receta</h3>
+                    <table class="min-w-full divide-y divide-gray-200 mb-6"><thead class="table-header"><tr><th class="px-4 py-2 text-left">Ingrediente</th><th class="px-4 py-2 text-left">Cantidad</th><th class="px-4 py-2 text-left">Costo</th></tr></thead><tbody id="modal-lista-receta" class="bg-white divide-y divide-gray-200">${recetaHtml}</tbody></table>
+                    <h3 class="text-lg font-semibold mb-2">Gastos Manuales</h3>
+                    <table class="min-w-full divide-y divide-gray-200 mb-6"><thead class="table-header"><tr><th class="px-4 py-2 text-left">Descripción</th><th class="px-4 py-2 text-left">Monto</th></tr></thead><tbody id="modal-lista-gastos" class="bg-white divide-y divide-gray-200">${gastosHtml}</tbody></table>
+                    <h3 class="text-lg font-semibold mb-2">Resumen de Precio</h3>
+                    <div class="summary-card space-y-3">
+                        <div class="flex justify-between text-sm"><span>Costo Total Producción:</span><span class="font-medium">$${costoTotal.toFixed(2)}</span></div>
+                        <div class="border-t"></div>
+                        <div class="flex justify-between text-lg mt-3"><span>Margen Minorista:</span><span class="font-medium">${vela.margenGananciaMinorista}%</span></div>
+                        <div class="flex justify-between text-xl font-bold text-indigo-600"><span>Precio Venta Minorista:</span><span>$${precioVentaMinorista.toFixed(2)}</span></div>
+                        <div class="border-t mt-3"></div>
+                        <div class="flex justify-between text-lg mt-3"><span>Margen Mayorista:</span><span class="font-medium">${vela.margenGananciaMayorista}%</span></div>
+                        <div class="flex justify-between text-xl font-bold text-teal-600"><span>Precio Venta Mayorista:</span><span>$${precioVentaMayorista.toFixed(2)}</span></div>
+                    </div>
+                    <div class="flex justify-end gap-4 mt-6"><button class="btn-neutral btn-cancelar-modal">Cancelar</button><button class="btn-primary btn-guardar-cambios" data-id="${vela.id}">Guardar Cambios</button></div>
+                    <button class="btn-download w-full mt-6 btn-descargar-modal-pdf" data-id="${vela.id}">Descargar PDF</button>
+                `;
+                modalOverlay.classList.remove('hidden');
+            }
+
+            function guardarCambios(id) {
+                if (!currentUser) return;
+                const velaIndex = catalogo.findIndex(v => v.id === id);
+                if (velaIndex === -1) return;
+
+                const velaOriginal = catalogo[velaIndex];
+                const velaActualizada = { ...velaOriginal };
+
+                velaActualizada.caracteristicas = document.getElementById('modal-caracteristicas').value.trim();
+                velaActualizada.pctGastoPerdida = parseFloat(document.getElementById('modal-gasto-perdida-pct').value) || 0;
+                velaActualizada.pctGastoProduccion = parseFloat(document.getElementById('modal-gasto-produccion-pct').value) || 0;
+
+                const nuevosReceta = [];
+                document.querySelectorAll('[data-receta-index]').forEach(input => {
+                    const index = parseInt(input.dataset.recetaIndex, 10);
+                    const nuevaCantidad = parseFloat(input.value);
+                    const itemOriginal = velaOriginal.receta[index];
+                    const producto = productos.find(p => p.nombre === itemOriginal.nombre);
+                    
+                    if (producto && nuevaCantidad > 0) {
+                        nuevosReceta.push({ nombre: itemOriginal.nombre, cantidad: nuevaCantidad, costo: producto.precio_por_gramo * nuevaCantidad });
+                    }
+                });
+                velaActualizada.receta = nuevosReceta;
+
+                const nuevosGastos = [];
+                document.querySelectorAll('[data-gasto-desc-index]').forEach((inputDesc, i) => {
+                    const inputMonto = document.querySelector(`[data-gasto-monto-index="${i}"]`);
+                    const nuevaDescripcion = inputDesc.value.trim();
+                    const nuevoMonto = parseFloat(inputMonto.value);
+
+                    if (nuevaDescripcion && nuevoMonto > 0) {
+                        nuevosGastos.push({ descripcion: nuevaDescripcion, monto: nuevoMonto });
+                    }
+                });
+                velaActualizada.gastosAdicionales = nuevosGastos;
+
+                db.collection('usuarios').doc(currentUser.uid).collection('catalogo').doc(id).update(velaActualizada)
+                    .then(() => {
+                        catalogo[velaIndex] = { id, ...velaActualizada };
+                        renderizarCatalogo();
+                        modalOverlay.classList.add('hidden');
+                        alert('¡Cambios guardados con éxito!');
+                    })
+                    .catch(error => {
+                        console.error("Error al guardar cambios: ", error);
+                        alert("Hubo un error al guardar los cambios.");
+                    });
+            }
+
+            function calcularCostoTotalVela(vela) {
+                const costoIngredientes = vela.receta.reduce((total, item) => total + item.costo, 0);
+                const costoGastosManuales = vela.gastosAdicionales.reduce((total, gasto) => total + gasto.monto, 0);
+                const pctPerdida = vela.pctGastoPerdida || 0;
+                const pctProduccion = vela.pctGastoProduccion || 0;
+                const sumaPorcentajes = (pctPerdida + pctProduccion) / 100;
+                const costoBase = costoIngredientes + costoGastosManuales;
+                return (sumaPorcentajes < 1) ? costoBase / (1 - sumaPorcentajes) : costoBase;
+            }
+
+            // --- Funciones de Propuestas ---
+            function inicializarPropuesta() {
+                actualizarNumeroPropuesta();
+                const ctx = canvasFirma.getContext('2d');
+                let dibujando = false;
+
+                function iniciarDibujo(e) { dibujando = true; dibujar(e); }
+                function finalizarDibujo() { dibujando = false; ctx.beginPath(); }
+                function dibujar(e) {
+                    if (!dibujando) return;
+                    ctx.lineWidth = 2;
+                    ctx.lineCap = 'round';
+                    const rect = canvasFirma.getBoundingClientRect();
+                    const x = (e.clientX || e.touches[0].clientX) - rect.left;
+                    const y = (e.clientY || e.touches[0].clientY) - rect.top;
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                }
+
+                canvasFirma.addEventListener('mousedown', iniciarDibujo);
+                canvasFirma.addEventListener('mouseup', finalizarDibujo);
+                canvasFirma.addEventListener('mousemove', dibujar);
+                canvasFirma.addEventListener('touchstart', iniciarDibujo);
+                canvasFirma.addEventListener('touchend', finalizarDibujo);
+                canvasFirma.addEventListener('touchmove', dibujar);
+
+                const hoy = new Date();
+                const opcionesFecha = { year: 'numeric', month: 'long', day: 'numeric' };
+                inputPropuestaFecha.value = hoy.toLocaleDateString('es-ES', opcionesFecha);
+                const unaSemanaDespues = new Date();
+                unaSemanaDespues.setDate(unaSemanaDespues.getDate() + 7);
+                inputPropuestaValidez.value = unaSemanaDespues.toLocaleDateString('es-ES', opcionesFecha);
+            }
+
+            function calcularPrecioVela(vela) {
+                const costoTotal = calcularCostoTotalVela(vela);
+                return costoTotal * (1 + (vela.margenGananciaMinorista || 0) / 100);
+            }
+
+            function agregarProductoAPropuesta() {
+                const selectedOption = selectPropuestaProducto.options[selectPropuestaProducto.selectedIndex];
+                const productoId = selectedOption.value;
+                const cantidad = parseInt(inputPropuestaCantidad.value, 10) || 1;
+                if (!productoId) return;
+
+                const vela = catalogo.find(v => v.id === productoId);
+                if (!vela) return;
+
+                const precioUnitario = parseFloat(selectedOption.dataset.precio);
+
+                propuestaActual.pedido.push({ id: vela.id, nombre: vela.nombre, cantidad: cantidad, precioUnitario: precioUnitario, total: cantidad * precioUnitario });
+
+                inputPropuestaCantidad.value = '1';
+                renderizarPedidoPropuesta();
+            }
+
+            function renderizarPedidoPropuesta() {
+                listaProductosPropuesta.innerHTML = '';
+                if (propuestaActual.pedido.length === 0) {
+                    listaProductosPropuesta.innerHTML = `<tr id="propuesta-fila-vacia"><td colspan="5" class="px-6 py-4 text-center text-gray-500">Aún no has agregado productos.</td></tr>`;
+                } else {
+                    propuestaActual.pedido.forEach((producto, index) => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="px-4 py-2">${producto.nombre}</td>
+                            <td class="px-4 py-2">${producto.cantidad}</td>
+                            <td class="px-4 py-2">$${producto.precioUnitario.toFixed(2)}</td>
+                            <td class="px-4 py-2">$${producto.total.toFixed(2)}</td>
+                            <td class="px-4 py-2 text-right"><button class="btn-danger btn-sm btn-eliminar-producto-propuesta" data-index="${index}">X</button></td>
+                        `;
+                        listaProductosPropuesta.appendChild(tr);
+                    });
+                }
+                calcularTotalesPropuesta();
+            }
+
+            function calcularTotalesPropuesta() {
+                const subtotal = propuestaActual.pedido.reduce((total, p) => total + p.total, 0);
+                const descuento = parseFloat(inputDescuento.value) || 0;
+                const envio = parseFloat(inputEnvio.value) || 0;
+                const total = subtotal - descuento + envio;
+
+                elSubtotalPropuesta.textContent = `$${subtotal.toFixed(2)}`;
+                elDescuentoResumen.textContent = `-$${descuento.toFixed(2)}`;
+                elEnvioResumen.textContent = `$${envio.toFixed(2)}`;
+                elTotalPropuesta.textContent = `$${total.toFixed(2)}`;
+            }
+
+            function limpiarPropuesta() {
+                propuestaActual = { cliente: {}, detalles: {}, pedido: [], costos: {} };
+                inputClienteNombre.value = '';
+                inputClienteTelefono.value = '';
+                inputClienteEmail.value = '';
+                inputPropuestaCantidad.value = '1';
+                textareaObservaciones.value = '';
+                inputPropuestaFirmanteNombre.value = '';
+                inputDescuento.value = '0';
+                inputEnvio.value = '0';
+                const ctx = canvasFirma.getContext('2d');
+                ctx.clearRect(0, 0, canvasFirma.width, canvasFirma.height);
+                renderizarPedidoPropuesta();
+                actualizarNumeroPropuesta();
+            }
+
+            function guardarPropuesta() {
+                if (!currentUser) return alert('Debes iniciar sesión para guardar.');
+
+                const propuesta = {
+                    numero: spanPropuestaNumero.textContent,
+                    fecha: inputPropuestaFecha.value,
+                    validez: inputPropuestaValidez.value,
+                    cliente: { nombre: inputClienteNombre.value, telefono: inputClienteTelefono.value, email: inputClienteEmail.value },
+                    pedido: [...propuestaActual.pedido],
+                    observaciones: textareaObservaciones.value,
+                    firmante: inputPropuestaFirmanteNombre.value,
+                    costos: { descuento: parseFloat(inputDescuento.value) || 0, envio: parseFloat(inputEnvio.value) || 0, subtotal: parseFloat(elSubtotalPropuesta.textContent.replace('$', '')), total: parseFloat(elTotalPropuesta.textContent.replace('$', '')) },
+                    firmaDataUrl: canvasFirma.toDataURL(),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                db.collection('usuarios').doc(currentUser.uid).collection('propuestas').add(propuesta)
+                    .then(docRef => {
+                        propuestasGuardadas.push({ id: docRef.id, ...propuesta });
+                        alert(`La propuesta ${propuesta.numero} ha sido guardada.`);
+                        limpiarPropuesta();
+                    })
+                    .catch(error => {
+                        console.error("Error al guardar propuesta: ", error);
+                        alert("Hubo un error al guardar la propuesta.");
+                    });
+            }
+
+            function actualizarNumeroPropuesta() {
+                const ultimoNumero = propuestasGuardadas.reduce((max, p) => {
+                    const num = parseInt(p.numero.replace('#', ''), 10);
+                    return num > max ? num : max;
+                }, 0);
+                spanPropuestaNumero.textContent = `#${(ultimoNumero + 1).toString().padStart(4, '0')}`;
+            }
+
+            function renderizarListaPropuestas() {
+                tablaPropuestasGuardadas.innerHTML = '';
+                if (propuestasGuardadas.length === 0) {
+                    tablaPropuestasGuardadas.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No hay propuestas guardadas.</td></tr>`;
+                    return;
+                }
+
+                propuestasGuardadas.sort((a, b) => b.createdAt.seconds - a.createdAt.seconds).forEach(propuesta => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="px-4 py-2 font-medium">${propuesta.numero}</td>
+                        <td class="px-4 py-2">${propuesta.cliente.nombre}</td>
+                        <td class="px-4 py-2">${propuesta.fecha}</td>
+                        <td class="px-4 py-2 font-semibold">$${propuesta.costos.total.toFixed(2)}</td>
+                        <td class="px-4 py-2 text-right">
+                            <button class="btn-secondary btn-xs btn-ver-propuesta" data-id="${propuesta.id}">Ver</button>
+                            <button class="btn-danger btn-xs btn-eliminar-propuesta ml-1" data-id="${propuesta.id}">Eliminar</button>
+                        </td>
+                    `;
+                    tablaPropuestasGuardadas.appendChild(tr);
+                });
+            }
+
+            function cargarPropuesta(id) {
+                const propuesta = propuestasGuardadas.find(p => p.id === id);
+                if (!propuesta) return;
+
+                limpiarPropuesta();
+
+                spanPropuestaNumero.textContent = propuesta.numero;
+                inputPropuestaFecha.value = propuesta.fecha;
+                inputPropuestaValidez.value = propuesta.validez;
+                inputClienteNombre.value = propuesta.cliente.nombre;
+                inputClienteTelefono.value = propuesta.cliente.telefono;
+                inputClienteEmail.value = propuesta.cliente.email;
+                propuestaActual.pedido = [...propuesta.pedido];
+                textareaObservaciones.value = propuesta.observaciones;
+                inputPropuestaFirmanteNombre.value = propuesta.firmante;
+                inputDescuento.value = propuesta.costos.descuento;
+                inputEnvio.value = propuesta.costos.envio;
+
+                const ctx = canvasFirma.getContext('2d');
+                if (propuesta.firmaDataUrl) {
+                    const img = new Image();
+                    img.onload = function() { ctx.drawImage(img, 0, 0); };
+                    img.src = propuesta.firmaDataUrl;
+                }
+
+                renderizarPedidoPropuesta();
+            }
+
+            function eliminarPropuesta(id) {
+                if (!currentUser) return;
+                const index = propuestasGuardadas.findIndex(p => p.id === id);
+                if (index > -1) {
+                    if (confirm(`¿Estás seguro de que quieres eliminar la propuesta #${propuestasGuardadas[index].numero}?`)) {
+                        db.collection('usuarios').doc(currentUser.uid).collection('propuestas').doc(id).delete()
+                            .then(() => {
+                                propuestasGuardadas.splice(index, 1);
+                                renderizarListaPropuestas();
+                            })
+                            .catch(error => {
+                                console.error("Error al eliminar propuesta: ", error);
+                                alert("Hubo un error al eliminar la propuesta.");
+                            });
+                    }
+                }
+            }
+
+            function generarPDFPropuesta() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+            }
+
+            function generarPDF() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+            }
+
+            // --- Funciones de Gestión de Insumos ---
+            function renderInsumos() {
+                tablaInsumos.innerHTML = '';
+                if (!productos || productos.length === 0) {
+                    tablaInsumos.innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No tienes insumos.</td></tr>`;
+                    return;
+                }
+
+                const insumosOrdenados = [...productos].sort((a, b) => {
+                    if (a.categoria < b.categoria) return -1;
+                    if (a.categoria > b.categoria) return 1;
+                    if (a.nombre < b.nombre) return -1;
+                    if (a.nombre > b.nombre) return 1;
+                    return 0;
+                });
+
+                insumosOrdenados.forEach(insumo => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="px-4 py-2 font-medium">${insumo.nombre}</td>
+                        <td class="px-4 py-2">$${insumo.precio_por_gramo.toFixed(2)}</td>
+                        <td class="px-4 py-2">${insumo.categoria}</td>
+                        <td class="px-4 py-2 text-right space-x-2 flex-shrink-0">
+                            <button class="btn-secondary btn-xs btn-editar-insumo" data-id="${insumo.id}">Editar</button>
+                            <button class="btn-danger btn-xs btn-eliminar-insumo" data-id="${insumo.id}">Eliminar</button>
+                        </td>
+                    `;
+                    tablaInsumos.appendChild(tr);
+                });
+            }
+
+            function resetFormInsumo() {
+                formInsumo.reset();
+                inputInsumoId.value = '';
+                formInsumoTitulo.textContent = 'Agregar Nuevo Insumo';
+                btnCancelarEdicionInsumo.classList.add('hidden');
+            }
+
+            function cargarDatosDeUsuario() {
+                if (!currentUser) return;
+
+                const insumosRef = db.collection('usuarios').doc(currentUser.uid).collection('insumos').get();
+                const catalogoRef = db.collection('usuarios').doc(currentUser.uid).collection('catalogo').get();
+                const propuestasRef = db.collection('usuarios').doc(currentUser.uid).collection('propuestas').get();
+
+                Promise.all([insumosRef, catalogoRef, propuestasRef])
+                    .then(([insumosSnapshot, catalogoSnapshot, propuestasSnapshot]) => {
+                        if (insumosSnapshot.empty) {
+                            // This case is now primarily for fallback. New users are handled proactively.
+                            alert('No se encontró tu lista de insumos. Creando una lista base ahora.');
+                            crearInsumosBaseParaUsuario(currentUser).then(() => window.location.reload());
+                            return;
+                        }
+                        productos = insumosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        catalogo = catalogoSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        propuestasGuardadas = propuestasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                        // Inicializar y renderizar toda la UI
+                        poblarSelectorIngredientes();
+                        renderizarCatalogo();
+                        renderizarReceta();
+                        renderizarGastos();
+                        renderInsumos();
+                        inicializarPropuesta();
+                        cambiarSeccion('catalogo');
+                    })
+                    .catch(error => {
+                        console.error("Error al cargar datos del usuario: ", error);
+                        alert("Hubo un error al cargar tus datos. Por favor, recarga la página.");
+                    });
+            }
+            
+            function crearInsumosBaseParaUsuario(user) {
+                const insumosBase = [
+                    { "nombre": "Cera de soya BPF", "precio_por_gramo": 0.16, "categoria": "Ceras" },
+                    { "nombre": "Envase de vidrio B&D 10x9", "precio_por_gramo": 20, "categoria": "Envases" },
+                    { "nombre": "Pabilo con alma de algodón A18", "precio_por_gramo": 3.00, "categoria": "Pabilos" },
+                    { "nombre": "Fragancia vainilla & caramelo 60 ml", "precio_por_gramo": 2.53, "categoria": "Fragancias" },
+                    { "nombre": "Mica café 25 gr", "precio_por_gramo": 3.52, "categoria": "Colorantes" },
+                    { "nombre": "Etiqueta personalizada", "precio_por_gramo": 2.00, "categoria": "Decoración" }
+                ];
+
+                const insumosRef = db.collection('usuarios').doc(user.uid).collection('insumos');
+                const batch = db.batch();
+
+                insumosBase.forEach(insumo => {
+                    const docRef = insumosRef.doc();
+                    batch.set(docRef, insumo);
+                });
+
+                return batch.commit().catch(error => {
+                    console.error("Error al crear insumos base para el usuario: ", error);
+                });
+            }
+
+
+            // =================================================================
+            // 5. ASIGNACIÓN DE EVENT LISTENERS
+            // =================================================================
+            // --- Autenticación
+            loginForm.addEventListener('submit', e => {
+                e.preventDefault();
+                auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-password').value)
+                    .catch(error => { authError.textContent = error.message; authError.classList.remove('hidden'); });
+            });
+
+            registerForm.addEventListener('submit', e => {
+                e.preventDefault();
+                auth.createUserWithEmailAndPassword(document.getElementById('register-email').value, document.getElementById('register-password').value)
+                    .then(userCredential => { crearInsumosBaseParaUsuario(userCredential.user); })
+                    .catch(error => { authError.textContent = error.message; authError.classList.remove('hidden'); });
+            });
+
+            logoutBtn.addEventListener('click', () => auth.signOut());
+
+            toggleAuthLink.addEventListener('click', e => {
+                e.preventDefault();
+                if (loginForm.classList.contains('hidden')) {
+                    loginForm.classList.remove('hidden');
+                    registerForm.classList.add('hidden');
+                    authTitle.textContent = 'Iniciar Sesión';
+                    toggleAuthLink.textContent = '¿No tienes cuenta? Regístrate';
+                } else {
+                    loginForm.classList.add('hidden');
+                    registerForm.classList.remove('hidden');
+                    authTitle.textContent = 'Crear Cuenta';
+                    toggleAuthLink.textContent = '¿Ya tienes cuenta? Inicia Sesión';
+                }
+                authError.classList.add('hidden');
+            });
+
+            googleSignInBtn.addEventListener('click', async () => {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                try {
+                    const result = await auth.signInWithPopup(provider);
+                    // Si es un usuario nuevo, crea su set de insumos base.
+                    if (result.additionalUserInfo && result.additionalUserInfo.isNewUser) {
+                        await crearInsumosBaseParaUsuario(result.user);
+                    }
+                    // onAuthStateChanged se encargará del resto.
+                } catch (error) {
+                    console.error("Error al iniciar sesión con Google: ", error);
+                    authError.textContent = `Error con Google: ${error.message}`;
+                    authError.classList.remove('hidden');
+                }
+            });
+
+            // --- Navegación por Pestañas
+            tabAgregarProducto.addEventListener('click', () => cambiarSeccion('agregar-producto'));
+            tabCatalogo.addEventListener('click', () => cambiarSeccion('catalogo'));
+            tabPropuesta.addEventListener('click', () => cambiarSeccion('propuesta'));
+            tabInsumos.addEventListener('click', () => cambiarSeccion('insumos'));
+
+            // --- Calculadora
+            btnAgregar.addEventListener('click', () => {
+                const nombreIngrediente = selectorIngrediente.value;
+                const cantidad = parseFloat(inputCantidad.value);
+                if (!cantidad || cantidad <= 0) return;
+                const producto = productos.find(p => p.nombre === nombreIngrediente);
+                receta.push({ nombre: nombreIngrediente, cantidad, costo: producto.precio_por_gramo * cantidad });
+                inputCantidad.value = '';
+                renderizarReceta();
+            });
+
+            btnAgregarGasto.addEventListener('click', () => {
+                const descripcion = inputGastoDescripcion.value.trim();
+                const monto = parseFloat(inputGastoMonto.value);
+                if (!descripcion || !monto || monto <= 0) return;
+                gastosAdicionales.push({ descripcion, monto });
+                inputGastoDescripcion.value = '';
+                inputGastoMonto.value = '';
+                renderizarGastos();
+            });
+
+            listaReceta.addEventListener('click', (e) => {
+                if (e.target.classList.contains('btn-danger')) {
+                    receta.splice(e.target.dataset.index, 1);
+                    renderizarReceta();
+                }
+            });
+
+            listaGastos.addEventListener('click', (e) => {
+                if (e.target.classList.contains('btn-danger')) {
+                    gastosAdicionales.splice(e.target.dataset.index, 1);
+                    renderizarGastos();
+                }
+            });
+
+            btnNuevoRegistro.addEventListener('click', () => {
+                receta = [];
+                gastosAdicionales = [];
+                inputRecetaNombre.value = '';
+                inputRecetaCaracteristicas.value = '';
+                renderizarReceta();
+                renderizarGastos();
+            });
+
+            inputGananciaMinorista.addEventListener('input', calcularTotales);
+            inputGananciaMayorista.addEventListener('input', calcularTotales);
+            inputGastoPerdidaPct.addEventListener('input', calcularTotales);
+            inputGastoProduccionPct.addEventListener('input', calcularTotales);
+            btnGuardarCatalogo.addEventListener('click', guardarEnCatalogo);
+
+            // --- Catálogo y Modales
+            catalogoContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('btn-borrar')) borrarDelCatalogo(e.target.dataset.id);
+                if (e.target.classList.contains('btn-ver-detalles')) mostrarDetalles(e.target.dataset.id);
+            });
+
+            modalCloseBtn.addEventListener('click', () => modalOverlay.classList.add('hidden'));
+            modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) modalOverlay.classList.add('hidden'); });
+            modalContent.addEventListener('click', (e) => {
+                if (e.target.classList.contains('btn-guardar-cambios')) guardarCambios(e.target.dataset.id);
+                if (e.target.classList.contains('btn-cancelar-modal')) modalOverlay.classList.add('hidden');
+            });
+
+            // --- Propuestas
+            btnPropuestaAgregarProducto.addEventListener('click', agregarProductoAPropuesta);
+            inputDescuento.addEventListener('input', calcularTotalesPropuesta);
+            inputEnvio.addEventListener('input', calcularTotalesPropuesta);
+            btnLimpiarPropuesta.addEventListener('click', limpiarPropuesta);
+            btnGenerarPDFPropuesta.addEventListener('click', generarPDFPropuesta);
+            btnGuardarPropuesta.addEventListener('click', guardarPropuesta);
+            btnVerGuardadas.addEventListener('click', () => { renderizarListaPropuestas(); listaPropuestasModalOverlay.classList.remove('hidden'); });
+            listaPropuestasModalCloseBtn.addEventListener('click', () => listaPropuestasModalOverlay.classList.add('hidden'));
+            tablaPropuestasGuardadas.addEventListener('click', (e) => {
+                if (e.target.classList.contains('btn-ver-propuesta')) { cargarPropuesta(e.target.dataset.id); listaPropuestasModalOverlay.classList.add('hidden'); }
+                if (e.target.classList.contains('btn-eliminar-propuesta')) { eliminarPropuesta(e.target.dataset.id); }
+            });
+            listaProductosPropuesta.addEventListener('click', (e) => {
+                if (e.target.classList.contains('btn-eliminar-producto-propuesta')) { propuestaActual.pedido.splice(e.target.dataset.index, 1); renderizarPedidoPropuesta(); }
+            });
+
+            // --- Insumos
+            formInsumo.addEventListener('submit', (e) => {
+                e.preventDefault();
+                if (!currentUser) return;
+                const insumo = { nombre: inputInsumoNombre.value, precio_por_gramo: parseFloat(inputInsumoPrecio.value), categoria: inputInsumoCategoria.value };
+                const id = inputInsumoId.value;
+                if (id) { // Actualizar
+                    db.collection('usuarios').doc(currentUser.uid).collection('insumos').doc(id).update(insumo).then(() => {
+                        const index = productos.findIndex(p => p.id === id);
+                        productos[index] = { id, ...insumo };
+                        resetFormInsumo();
+                        renderInsumos();
+                        poblarSelectorIngredientes();
+                    }).catch(err => console.error("Error al actualizar insumo: ", err));
+                } else { // Crear
+                    db.collection('usuarios').doc(currentUser.uid).collection('insumos').add(insumo).then(docRef => {
+                        productos.push({ id: docRef.id, ...insumo });
+                        resetFormInsumo();
+                        renderInsumos();
+                        poblarSelectorIngredientes();
+                    }).catch(err => console.error("Error al agregar insumo: ", err));
+                }
+            });
+
+            tablaInsumos.addEventListener('click', (e) => {
+                const id = e.target.dataset.id;
+                if (!id) return;
+                if (e.target.classList.contains('btn-editar-insumo')) {
+                    const insumo = productos.find(p => p.id === id);
+                    if (insumo) {
+                        formInsumoTitulo.textContent = 'Editar Insumo';
+                        inputInsumoId.value = insumo.id;
+                        inputInsumoNombre.value = insumo.nombre;
+                        inputInsumoPrecio.value = insumo.precio_por_gramo;
+                        inputInsumoCategoria.value = insumo.categoria;
+                        btnCancelarEdicionInsumo.classList.remove('hidden');
+                    }
+                }
+                if (e.target.classList.contains('btn-eliminar-insumo')) {
+                    if (confirm('¿Estás seguro de que quieres eliminar este insumo?')) {
+                        db.collection('usuarios').doc(currentUser.uid).collection('insumos').doc(id).delete().then(() => {
+                            productos = productos.filter(p => p.id !== id);
+                            renderInsumos();
+                            poblarSelectorIngredientes();
+                        }).catch(err => console.error("Error al eliminar insumo: ", err));
+                    }
+                }
+            });
+
+            btnCancelarEdicionInsumo.addEventListener('click', resetFormInsumo);
+
+            // =================================================================
+            // 6. PUNTO DE ENTRADA PRINCIPAL
+            // =================================================================
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    currentUser = user;
+                    authContainer.classList.add('hidden');
+                    appContainer.classList.remove('hidden');
+                    userEmailSpan.textContent = user.email;
+                    inicializarAplicacion();
+                } else {
+                    currentUser = null;
+                    authContainer.classList.remove('hidden');
+                    appContainer.classList.add('hidden');
+                    userEmailSpan.textContent = '';
+                }
+            });
+        });
+    </script>
