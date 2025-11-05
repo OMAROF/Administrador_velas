@@ -467,16 +467,29 @@
                         </div>
                         <div class="card">
                             <h2 class="text-xl font-semibold mb-4">Agregar Productos a la Propuesta</h2>
-                            <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-                                <div class="md:col-span-3">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-6 items-end">
+                                <div class="md:col-span-2">
                                     <label for="propuesta-producto" class="block text-sm font-medium text-gray-700">Producto del Catálogo</label>
                                     <select id="propuesta-producto" class="input-field mt-1"></select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Tipo de Precio</label>
+                                    <div class="flex items-center space-x-4 mt-1 bg-white p-2 rounded-md border border-gray-300">
+                                        <label class="flex items-center cursor-pointer">
+                                            <input type="radio" name="tipo-precio-propuesta" value="minorista" class="form-radio h-4 w-4 text-indigo-600" checked>
+                                            <span class="ml-2 text-sm text-gray-700">Minorista</span>
+                                        </label>
+                                        <label class="flex items-center cursor-pointer">
+                                            <input type="radio" name="tipo-precio-propuesta" value="mayorista" class="form-radio h-4 w-4 text-indigo-600">
+                                            <span class="ml-2 text-sm text-gray-700">Mayorista</span>
+                                        </label>
+                                    </div>
                                 </div>
                                 <div>
                                     <label for="propuesta-cantidad" class="block text-sm font-medium text-gray-700">Cantidad</label>
                                     <input type="number" id="propuesta-cantidad" value="1" class="input-field mt-1">
                                 </div>
-                                <div>
+                                <div class="md:col-span-2">
                                     <button id="propuesta-agregar-producto-btn" class="btn-primary w-full">Agregar</button>
                                 </div>
                             </div>
@@ -1262,14 +1275,10 @@
 
             function poblarSelectorProductosPropuesta() {
                 selectPropuestaProducto.innerHTML = '<option value="">Seleccione un producto...</option>';
-                catalogo.forEach(vela => {
-                    const costoTotal = calcularCostoTotalVela(vela);
-                    const precioVentaMinorista = costoTotal * (1 + (vela.margenGananciaMinorista || 0) / 100);
-
+                catalogo.sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(vela => {
                     const option = document.createElement('option');
                     option.value = vela.id;
-                    option.textContent = `${vela.nombre} - $${precioVentaMinorista.toFixed(2)}`;
-                    option.dataset.precio = precioVentaMinorista.toFixed(2);
+                    option.textContent = vela.nombre;
                     selectPropuestaProducto.appendChild(option);
                 });
             }
@@ -1280,17 +1289,30 @@
             }
 
             function agregarProductoAPropuesta() {
-                const selectedOption = selectPropuestaProducto.options[selectPropuestaProducto.selectedIndex];
-                const productoId = selectedOption.value;
+                const productoId = selectPropuestaProducto.value;
                 const cantidad = parseInt(inputPropuestaCantidad.value, 10) || 1;
                 if (!productoId) return;
 
                 const vela = catalogo.find(v => v.id === productoId);
                 if (!vela) return;
 
-                const precioUnitario = parseFloat(selectedOption.dataset.precio);
+                const tipoPrecio = document.querySelector('input[name="tipo-precio-propuesta"]:checked').value;
+                const costoTotal = calcularCostoTotalVela(vela);
+                let precioUnitario;
 
-                propuestaActual.pedido.push({ id: vela.id, nombre: vela.nombre, cantidad: cantidad, precioUnitario: precioUnitario, total: cantidad * precioUnitario });
+                if (tipoPrecio === 'mayorista') {
+                    precioUnitario = costoTotal * (1 + (vela.margenGananciaMayorista || 0) / 100);
+                } else { // minorista por defecto
+                    precioUnitario = costoTotal * (1 + (vela.margenGananciaMinorista || 0) / 100);
+                }
+
+                propuestaActual.pedido.push({
+                    id: vela.id,
+                    nombre: vela.nombre,
+                    cantidad: cantidad,
+                    precioUnitario: precioUnitario,
+                    total: cantidad * precioUnitario
+                });
 
                 inputPropuestaCantidad.value = '1';
                 renderizarPedidoPropuesta();
