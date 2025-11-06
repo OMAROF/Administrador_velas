@@ -1194,6 +1194,10 @@
                 const vela = catalogo.find(v => v.id === id);
                 if (!vela) return;
 
+                const imagenPreviewHtml = vela.imagenUrl
+                    ? `<div class="w-full flex justify-center mb-4"><img src="${vela.imagenUrl}" alt="${vela.nombre}" class="max-h-48 rounded-lg"></div>`
+                    : '';
+
                 let recetaHtml = vela.receta.map((item, index) => `<tr><td class="px-4 py-2">${item.nombre}</td><td class="px-4 py-2"><input type="number" value="${item.cantidad}" class="input-field w-24" data-receta-index="${index}"></td><td class="px-4 py-2">$${item.costo.toFixed(2)}</td></tr>`).join('');
                 let gastosHtml = vela.gastosAdicionales.map((gasto, index) => `<tr><td class="px-4 py-2"><input type="text" value="${gasto.descripcion}" class="input-field w-full" data-gasto-desc-index="${index}"></td><td class="px-4 py-2"><input type="number" value="${gasto.monto}" class="input-field w-24" data-gasto-monto-index="${index}"></td></tr>`).join('');
                 const costoTotal = calcularCostoTotalVela(vela);
@@ -1201,6 +1205,7 @@
                 const precioVentaMayorista = costoTotal * (1 + (vela.margenGananciaMayorista || 0) / 100);
 
                 modalContent.innerHTML = `
+                    ${imagenPreviewHtml}
                     <h2 class="text-2xl font-bold mb-2">${vela.nombre}</h2>
                     <div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-1">Características</label><textarea id="modal-caracteristicas" class="input-field w-full" rows="2">${vela.caracteristicas || ''}</textarea></div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -1221,7 +1226,11 @@
                         <div class="flex justify-between text-lg mt-3"><span>Margen Mayorista:</span><span class="font-medium">${vela.margenGananciaMayorista}%</span></div>
                         <div class="flex justify-between text-xl font-bold text-teal-600"><span>Precio Venta Mayorista:</span><span>$${precioVentaMayorista.toFixed(2)}</span></div>
                     </div>
-                    <div class="flex justify-end gap-4 mt-6"><button class="btn-neutral btn-cancelar-modal">Cancelar</button><button class="btn-primary btn-guardar-cambios" data-id="${vela.id}">Guardar Cambios</button></div>
+                    <div class="flex justify-end gap-4 mt-6">
+                        <button class="btn-neutral btn-cancelar-modal">Cancelar</button>
+                        ${vela.imagenUrl ? `<button class="btn-secondary btn-ver-imagen-completa" data-imagen-url="${vela.imagenUrl}">Ver Imagen</button>` : ''}
+                        <button class="btn-primary btn-guardar-cambios" data-id="${vela.id}">Guardar Cambios</button>
+                    </div>
                     <button class="btn-download w-full mt-6 btn-descargar-modal-pdf" data-id="${vela.id}">Descargar PDF</button>
                 `;
                 modalOverlay.classList.remove('hidden');
@@ -1839,6 +1848,9 @@
             modalContent.addEventListener('click', (e) => {
                 if (e.target.classList.contains('btn-guardar-cambios')) guardarCambios(e.target.dataset.id);
                 if (e.target.classList.contains('btn-cancelar-modal')) modalOverlay.classList.add('hidden');
+                if (e.target.classList.contains('btn-ver-imagen-completa')) {
+                    window.open(e.target.dataset.imagenUrl, '_blank');
+                }
             });
 
             // --- Propuestas
