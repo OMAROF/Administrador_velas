@@ -62,8 +62,8 @@ document.addEventListener('DOMContentLoaded', function() {
             precioVentaMinorista = Math.ceil(precioVentaMinorista);
 
             const imagenHtml = vela.imagenUrl 
-                ? `<img src="${vela.imagenUrl}" alt="${vela.nombre}" class="w-full h-80 object-cover rounded-t-lg shadow-sm cursor-pointer" data-src="${vela.imagenUrl}">`
-                : '<div class="w-full h-80 bg-gray-200 flex items-center justify-center rounded-t-lg"><span class="text-gray-500">Imagen no disponible</span></div>';
+                ? `<img src="${vela.imagenUrl}" alt="${vela.nombre}" class="w-full h-72 object-cover rounded-t-lg shadow-sm cursor-pointer" data-src="${vela.imagenUrl}">`
+                : '<div class="w-full h-72 bg-gray-200 flex items-center justify-center rounded-t-lg"><span class="text-gray-500">Imagen no disponible</span></div>';
 
             card.innerHTML = `
                 ${imagenHtml}
