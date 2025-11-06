@@ -1106,8 +1106,8 @@
                     const precioVentaMayorista = costoTotal * (1 + (vela.margenGananciaMayorista || 0) / 100);
 
                     const imagenHtml = vela.imagenUrl 
-                        ? `<img src="${vela.imagenUrl}" alt="${vela.nombre}" class="w-full aspect-square object-cover rounded-t-lg mb-4">`
-                        : '<div class="w-full aspect-square bg-gray-200 rounded-t-lg flex items-center justify-center mb-4"><span class="text-gray-500 text-sm">Sin imagen</span></div>';
+                        ? `<img src="${vela.imagenUrl}" alt="${vela.nombre}" class="w-2/5 aspect-square object-cover rounded-t-lg mb-4 mx-auto">`
+                        : '<div class="w-2/5 aspect-square bg-gray-200 rounded-t-lg flex items-center justify-center mb-4 mx-auto"><span class="text-gray-500 text-sm">Sin imagen</span></div>';
 
                     card.innerHTML = `
                         ${imagenHtml}
