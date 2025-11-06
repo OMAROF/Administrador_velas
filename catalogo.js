@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const catalogoClientesVacioMsg = document.getElementById('catalogo-clientes-vacio-msg');
     const filtroPublicoNombre = document.getElementById('filtro-publico-nombre');
     const filtroPublicoCategoria = document.getElementById('filtro-publico-categoria');
+    const imageModalOverlay = document.getElementById('image-modal-overlay');
+    const imageModalContent = document.getElementById('image-modal-content');
+    const imageModalClose = document.getElementById('image-modal-close');
 
     let catalogoPublicoCompleto = []; // Almacenará todos los productos para filtrar
 
@@ -58,15 +61,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
         catalogo.forEach(vela => {
             const card = document.createElement('div');
-            card.className = 'card flex flex-col overflow-hidden rounded-lg shadow-lg';
+            card.className = 'card flex flex-col overflow-hidden rounded-lg shadow-lg p-0'; // Padding a 0 para que la imagen ocupe todo el ancho
 
             const costoTotal = calcularCostoTotalVela(vela);
             let precioVentaMinorista = costoTotal * (1 + (vela.margenGananciaMinorista || 0) / 100);
             precioVentaMinorista = Math.ceil(precioVentaMinorista); // Redondeo hacia arriba
 
             const imagenHtml = vela.imagenUrl 
-                ? `<img src="${vela.imagenUrl}" alt="${vela.nombre}" class="w-full h-64 object-cover">`
-                : '<div class="w-full h-64 bg-gray-200 flex items-center justify-center"><span class="text-gray-500">Imagen no disponible</span></div>';
+                ? `<img src="${vela.imagenUrl}" alt="${vela.nombre}" class="w-full h-80 object-cover rounded-t-lg shadow-sm cursor-pointer" data-src="${vela.imagenUrl}">`
+                : '<div class="w-full h-80 bg-gray-200 flex items-center justify-center rounded-t-lg"><span class="text-gray-500">Imagen no disponible</span></div>';
 
             card.innerHTML = `
                 ${imagenHtml}
@@ -151,6 +154,28 @@ document.addEventListener('DOMContentLoaded', function() {
     // =================================================================
     filtroPublicoNombre.addEventListener('input', filtrarCatalogo);
     filtroPublicoCategoria.addEventListener('change', filtrarCatalogo);
+
+    // --- Event Listeners para Image Modal ---
+    catalogoClientesContainer.addEventListener('click', function(e) {
+        if (e.target && e.target.dataset.src) {
+            imageModalContent.src = e.target.dataset.src;
+            imageModalOverlay.classList.remove('hidden');
+        }
+    });
+
+    function closeModal() {
+        imageModalOverlay.classList.add('hidden');
+        imageModalContent.src = ''; // Limpia el src para detener la carga si se cierra rápido
+    }
+
+    imageModalClose.addEventListener('click', closeModal);
+    imageModalOverlay.addEventListener('click', function(e) {
+        // Cierra el modal solo si se hace clic en el fondo (overlay)
+        if (e.target === imageModalOverlay) {
+            closeModal();
+        }
+    });
+
 
     // =================================================================
     // 5. EJECUCIÓN INICIAL

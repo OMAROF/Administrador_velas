@@ -32,6 +32,44 @@
             border-color: #4f46e5;
             box-shadow: 0 0 0 2px #c7d2fe;
         }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+        .modal-content-image {
+            max-width: 90vw;
+            max-height: 90vh;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease;
+            transform: scale(0.95);
+        }
+        .modal-overlay:not(.hidden) .modal-content-image {
+            transform: scale(1);
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            font-size: 2.5rem;
+            line-height: 1;
+            color: white;
+            cursor: pointer;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body class="bg-gray-100 antialiased text-gray-800">
@@ -52,6 +90,12 @@
                 <p id="catalogo-clientes-vacio-msg" class="text-center text-gray-500 col-span-full">Cargando productos...</p>
             </div>
         </div>
+    </div>
+
+    <!-- Modal para imagen ampliada -->
+    <div id="image-modal-overlay" class="modal-overlay hidden">
+        <span id="image-modal-close" class="modal-close-btn">&times;</span>
+        <img id="image-modal-content" src="" alt="Vista ampliada del producto" class="modal-content-image">
     </div>
 
     <script src="catalogo.js"></script>
