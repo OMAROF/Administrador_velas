@@ -249,12 +249,14 @@
 
             <!-- Pestañas de Navegación -->
             <div class="mb-8">
-                <nav class="flex space-x-2" aria-label="Tabs">
-                    <button id="tab-catalogo" class="tab">Catálogo</button>
-                    <button id="tab-agregar-producto" class="tab">Agregar producto</button>
-                    <button id="tab-propuesta" class="tab">Propuesta de Venta</button>
-                    <button id="tab-insumos" class="tab">Mis Insumos</button>
-                </nav>
+                <div class="overflow-x-auto pb-2">
+                    <nav class="flex space-x-2" aria-label="Tabs">
+                        <button id="tab-catalogo" class="tab flex-shrink-0">Catálogo</button>
+                        <button id="tab-agregar-producto" class="tab flex-shrink-0">Agregar producto</button>
+                        <button id="tab-propuesta" class="tab flex-shrink-0">Propuesta de Venta</button>
+                        <button id="tab-insumos" class="tab flex-shrink-0">Mis Insumos</button>
+                    </nav>
+                </div>
             </div>
 
             <!-- Sección del Catálogo -->
@@ -674,6 +676,20 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- Contenedor del Catálogo para Clientes (Público) -->
+    <div id="seccion-catalogo-clientes" class="hidden">
+        <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
+            <header class="mb-8 text-center">
+                <h1 class="text-3xl font-bold text-gray-900">Nuestro Catálogo</h1>
+                <p class="mt-2 text-lg text-gray-600">Explora nuestra selección de velas artesanales.</p>
+            </header>
+            <div id="catalogo-clientes-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Las tarjetas del catálogo público se insertarán aquí -->
+                <p id="catalogo-clientes-vacio-msg" class="text-center text-gray-500 col-span-full">Cargando productos...</p>
+            </div>
         </div>
     </div>
 
@@ -2081,21 +2097,113 @@
             filtroInsumoCategoria.addEventListener('change', filtrarYRenderizarInsumos);
 
             // =================================================================
+            // 5.5 FUNCIONES PARA CATÁLOGO PÚBLICO DE CLIENTES
+            // =================================================================
+            
+            function renderizarCatalogoPublico(catalogoData) {
+                const container = document.getElementById('catalogo-clientes-container');
+                const msgVacio = document.getElementById('catalogo-clientes-vacio-msg');
+                container.innerHTML = '';
+
+                if (!catalogoData || catalogoData.length === 0) {
+                    msgVacio.textContent = 'No hay productos disponibles en este momento.';
+                    container.appendChild(msgVacio);
+                    return;
+                }
+                
+                msgVacio.style.display = 'none';
+
+                catalogoData.sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(vela => {
+                    const card = document.createElement('div');
+                    card.className = 'card flex flex-col';
+
+                    const costoTotal = calcularCostoTotalVela(vela);
+                    const precioVentaMinorista = costoTotal * (1 + (vela.margenGananciaMinorista || 0) / 100);
+                    
+                    // IMPORTANTE: Reemplaza este número por tu número de WhatsApp con código de país (ej. 521 para México)
+                    const numeroWhatsApp = '529994975170'; 
+                    const mensajeWhatsApp = encodeURIComponent(`Hola, estoy interesado/a en el producto: ${vela.nombre}`);
+                    const whatsappUrl = `https://wa.me/${numeroWhatsApp}?text=${mensajeWhatsApp}`;
+
+                    const imagenHtml = vela.imagenUrl 
+                        ? `<img src="${vela.imagenUrl}" alt="${vela.nombre}" class="w-full h-64 object-cover rounded-t-lg mb-4">`
+                        : '<div class="w-full h-64 bg-gray-200 rounded-t-lg flex items-center justify-center mb-4"><span class="text-gray-500 text-sm">Sin imagen</span></div>';
+
+                    const categoriasHtml = Array.isArray(vela.categoria) && vela.categoria.length > 0
+                        ? `<div class="flex flex-wrap gap-1 mt-2">${vela.categoria.map(c => `<span class="bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-0.5 rounded-full">${c}</span>`).join('')}</div>`
+                        : '';
+
+                    card.innerHTML = `
+                        ${imagenHtml}
+                        <div class="p-4 flex-grow flex flex-col">
+                            <h3 class="text-xl font-bold text-gray-800">${vela.nombre}</h3>
+                            <p class="text-sm text-gray-600 my-3 flex-grow">${vela.caracteristicas || 'Descripción no disponible.'}</p>
+                            ${categoriasHtml}
+                            <div class="border-t pt-4 mt-4 flex justify-between items-center">
+                                <span class="text-2xl font-extrabold text-indigo-700">$${precioVentaMinorista.toFixed(2)}</span>
+                                <a href="${whatsappUrl}" target="_blank" rel="noopener noreferrer" class="btn-secondary inline-flex items-center">
+                                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.886-.001 2.267.651 4.383 1.803 6.166l-1.225 4.485 4.574-1.196z"/></svg>
+                                    Contactar
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+
+            async function mostrarCatalogoPublico() {
+                // Ocultar las vistas principales de la app
+                authContainer.classList.add('hidden');
+                appContainer.classList.add('hidden');
+                
+                // Mostrar el contenedor del catálogo público
+                const seccionPublica = document.getElementById('seccion-catalogo-clientes');
+                seccionPublica.classList.remove('hidden');
+
+                try {
+                    const publicUserId = 'MeVpNiYcH6RSwWzkzLGnvdROYgE3';
+                    const catalogoSnapshot = await db.collection('usuarios').doc(publicUserId).collection('catalogo').orderBy('nombre').get();
+                    const catalogoPublico = catalogoSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    renderizarCatalogoPublico(catalogoPublico);
+
+                } catch (error) {
+                    console.error("Error al cargar el catálogo público:", error);
+                    const msgVacio = document.getElementById('catalogo-clientes-vacio-msg');
+                    msgVacio.textContent = 'No se pudo cargar el catálogo. Por favor, revisa las reglas de seguridad de Firebase y que el UID sea correcto.';
+                }
+            }
+
+            // =================================================================
             // 6. PUNTO DE ENTRADA PRINCIPAL
             // =================================================================
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    currentUser = user;
-                    authContainer.classList.add('hidden');
-                    appContainer.classList.remove('hidden');
-                    userEmailSpan.textContent = user.email;
-                    inicializarAplicacion();
-                } else {
-                    currentUser = null;
-                    authContainer.classList.remove('hidden');
-                    appContainer.classList.add('hidden');
-                    userEmailSpan.textContent = '';
+            
+            // --- Lógica de Enrutamiento ---
+            function manejarRuta() {
+                if (window.location.hash === '#catalogo-clientes') {
+                    mostrarCatalogoPublico();
+                    return true; // Indica que se manejó una ruta pública
                 }
-            });
+                return false; // Indica que se debe seguir el flujo normal
+            }
+
+            // Primero, manejar la ruta. Si es una ruta pública, no continuamos con la lógica de autenticación.
+            if (!manejarRuta()) {
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        currentUser = user;
+                        authContainer.classList.add('hidden');
+                        appContainer.classList.remove('hidden');
+                        userEmailSpan.textContent = user.email;
+                        inicializarAplicacion();
+                    } else {
+                        currentUser = null;
+                        authContainer.classList.remove('hidden');
+                        appContainer.classList.add('hidden');
+                        userEmailSpan.textContent = '';
+                    }
+                });
+            }
         });
     </script>
