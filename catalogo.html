@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Velas Artesanales</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .input-field {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px #c7d2fe;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 antialiased text-gray-800">
+
+    <div id="seccion-catalogo-clientes">
+        <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
+            <header class="mb-8 text-center">
+                <h1 class="text-3xl font-bold text-gray-900">Nuestro Catálogo</h1>
+                <p class="mt-2 text-lg text-gray-600">Explora nuestra selección de velas artesanales.</p>
+            </header>
+            <div class="card mb-6">
+                <div class="flex flex-col md:flex-row gap-4">
+                    <input type="text" id="filtro-publico-nombre" placeholder="Buscar por nombre..." class="input-field flex-grow">
+                    <select id="filtro-publico-categoria" class="input-field w-full md:w-64"></select>
+                </div>
+            </div>
+            <div id="catalogo-clientes-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <p id="catalogo-clientes-vacio-msg" class="text-center text-gray-500 col-span-full">Cargando productos...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="catalogo.js"></script>
+</body>
+</html>

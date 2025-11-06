@@ -679,19 +679,7 @@
         </div>
     </div>
 
-    <!-- Contenedor del Catálogo para Clientes (Público) -->
-    <div id="seccion-catalogo-clientes" class="hidden">
-        <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-7xl">
-            <header class="mb-8 text-center">
-                <h1 class="text-3xl font-bold text-gray-900">Nuestro Catálogo</h1>
-                <p class="mt-2 text-lg text-gray-600">Explora nuestra selección de velas artesanales.</p>
-            </header>
-            <div id="catalogo-clientes-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Las tarjetas del catálogo público se insertarán aquí -->
-                <p id="catalogo-clientes-vacio-msg" class="text-center text-gray-500 col-span-full">Cargando productos...</p>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Modal para Detalles de Vela -->
     <div id="detalle-modal-overlay" class="modal-overlay hidden">
@@ -1054,11 +1042,13 @@
                 elCostoTotalProduccion.textContent = `$${costoTotalProduccion.toFixed(2)}`;
 
                 const margenMinorista = parseFloat(inputGananciaMinorista.value) || 0;
-                const precioVentaMinorista = costoTotalProduccion * (1 + margenMinorista / 100);
+                let precioVentaMinorista = costoTotalProduccion * (1 + margenMinorista / 100);
+                precioVentaMinorista = Math.ceil(precioVentaMinorista);
                 elPrecioFinalMinorista.textContent = `$${precioVentaMinorista.toFixed(2)}`;
 
                 const margenMayorista = parseFloat(inputGananciaMayorista.value) || 0;
-                const precioVentaMayorista = costoTotalProduccion * (1 + margenMayorista / 100);
+                let precioVentaMayorista = costoTotalProduccion * (1 + margenMayorista / 100);
+                precioVentaMayorista = Math.ceil(precioVentaMayorista);
                 elPrecioFinalMayorista.textContent = `$${precioVentaMayorista.toFixed(2)}`;
             }
 
@@ -2099,29 +2089,53 @@
             // =================================================================
             // 5.5 FUNCIONES PARA CATÁLOGO PÚBLICO DE CLIENTES
             // =================================================================
+            let catalogoPublicoData = []; // Almacenar los datos para no recargarlos
+
+            function poblarFiltroPublicoCategorias() {
+                const filtroCategoria = document.getElementById('filtro-publico-categoria');
+                const categorias = [...new Set(
+                    catalogoPublicoData.flatMap(p => p.categoria || [])
+                )].sort();
+                filtroCategoria.innerHTML = '<option value="">Todas las categorías</option>';
+                categorias.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    filtroCategoria.appendChild(option);
+                });
+            }
             
-            function renderizarCatalogoPublico(catalogoData) {
+            function renderizarCatalogoPublico() {
                 const container = document.getElementById('catalogo-clientes-container');
                 const msgVacio = document.getElementById('catalogo-clientes-vacio-msg');
                 container.innerHTML = '';
 
-                if (!catalogoData || catalogoData.length === 0) {
-                    msgVacio.textContent = 'No hay productos disponibles en este momento.';
-                    container.appendChild(msgVacio);
+                const textoBusqueda = document.getElementById('filtro-publico-nombre').value.toLowerCase();
+                const categoriaSeleccionada = document.getElementById('filtro-publico-categoria').value;
+
+                const catalogoFiltrado = catalogoPublicoData.filter(vela => {
+                    const matchNombre = !textoBusqueda || vela.nombre.toLowerCase().includes(textoBusqueda);
+                    const matchCategoria = !categoriaSeleccionada || (Array.isArray(vela.categoria) && vela.categoria.includes(categoriaSeleccionada));
+                    return matchNombre && matchCategoria;
+                });
+
+                if (catalogoFiltrado.length === 0) {
+                    msgVacio.textContent = 'No se encontraron productos con los filtros actuales.';
+                    msgVacio.style.display = 'block';
+                    container.appendChild(msgVacio); // Asegurarse de que el mensaje esté dentro del contenedor
                     return;
                 }
                 
                 msgVacio.style.display = 'none';
 
-                catalogoData.sort((a, b) => a.nombre.localeCompare(b.nombre)).forEach(vela => {
+                catalogoFiltrado.forEach(vela => {
                     const card = document.createElement('div');
                     card.className = 'card flex flex-col';
 
                     const costoTotal = calcularCostoTotalVela(vela);
                     const precioVentaMinorista = costoTotal * (1 + (vela.margenGananciaMinorista || 0) / 100);
                     
-                    // IMPORTANTE: Reemplaza este número por tu número de WhatsApp con código de país (ej. 521 para México)
-                    const numeroWhatsApp = '529994975170'; 
+                    const numeroWhatsApp = '5211234567890'; 
                     const mensajeWhatsApp = encodeURIComponent(`Hola, estoy interesado/a en el producto: ${vela.nombre}`);
                     const whatsappUrl = `https://wa.me/${numeroWhatsApp}?text=${mensajeWhatsApp}`;
 
@@ -2153,20 +2167,22 @@
             }
 
             async function mostrarCatalogoPublico() {
-                // Ocultar las vistas principales de la app
                 authContainer.classList.add('hidden');
                 appContainer.classList.add('hidden');
-                
-                // Mostrar el contenedor del catálogo público
                 const seccionPublica = document.getElementById('seccion-catalogo-clientes');
                 seccionPublica.classList.remove('hidden');
 
                 try {
                     const publicUserId = 'MeVpNiYcH6RSwWzkzLGnvdROYgE3';
-                    const catalogoSnapshot = await db.collection('usuarios').doc(publicUserId).collection('catalogo').orderBy('nombre').get();
-                    const catalogoPublico = catalogoSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    const catalogoSnapshot = await db.collection('usuarios').doc(publicUserId).collection('catalogo').get();
+                    catalogoPublicoData = catalogoSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     
-                    renderizarCatalogoPublico(catalogoPublico);
+                    poblarFiltroPublicoCategorias();
+                    renderizarCatalogoPublico();
+
+                    // Añadir event listeners para los filtros
+                    document.getElementById('filtro-publico-nombre').addEventListener('input', renderizarCatalogoPublico);
+                    document.getElementById('filtro-publico-categoria').addEventListener('change', renderizarCatalogoPublico);
 
                 } catch (error) {
                     console.error("Error al cargar el catálogo público:", error);
@@ -2207,3 +2223,5 @@
             }
         });
     </script>
+</body>
+</html>
