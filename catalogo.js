@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <h3 class="text-xl font-bold text-gray-900 mb-2">${vela.nombre}</h3>
                     <p class="text-gray-600 text-sm mb-4 flex-grow">${vela.caracteristicas || 'Descripción no disponible.'}</p>
                     <div class="mt-auto">
-                        <p class="text-2xl font-extrabold text-indigo-600 text-right mb-4">$${precioVentaMinorista.toFixed(2)} MXN</p>
+                        <p class="text-2xl font-extrabold text-gray-900 text-center mb-4">$${precioVentaMinorista.toFixed(2)} MXN</p>
                         <a href="https://wa.me/5211234567890?text=Hola,%20me%20interesa%20el%20producto%20'${encodeURIComponent(vela.nombre)}'" target="_blank" rel="noopener noreferrer" class="block w-full text-center bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors duration-300">
                             Contactar por WhatsApp
                         </a>
