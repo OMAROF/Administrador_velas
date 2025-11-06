@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const db = firebase.firestore();
 
     // =================================================================
-    // 2. DECLARACIÓN DE ELEMENTOS DE LA UI
+    // 2. DECLARACIÓN DE ELEMENTOS Y ESTADO GLOBAL
     // =================================================================
     const catalogoClientesContainer = document.getElementById('catalogo-clientes-container');
     const catalogoClientesVacioMsg = document.getElementById('catalogo-clientes-vacio-msg');
@@ -24,18 +24,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const imageModalOverlay = document.getElementById('image-modal-overlay');
     const imageModalContent = document.getElementById('image-modal-content');
     const imageModalClose = document.getElementById('image-modal-close');
+    const paginacionContainer = document.getElementById('catalogo-publico-paginacion');
 
-    let catalogoPublicoCompleto = []; // Almacenará todos los productos para filtrar
+    let catalogoPublicoCompleto = []; // Almacenará todos los productos sin filtrar
+    let paginaActual = 1;
+    const itemsPorPagina = 10;
 
     // =================================================================
     // 3. DEFINICIÓN DE FUNCIONES
     // =================================================================
 
-    /**
-     * Calcula el costo total de producción de una vela.
-     * @param {object} vela - El objeto de la vela del catálogo.
-     * @returns {number} El costo total de producción.
-     */
     function calcularCostoTotalVela(vela) {
         const costoIngredientes = vela.receta.reduce((total, item) => total + item.costo, 0);
         const costoGastosManuales = vela.gastosAdicionales.reduce((total, gasto) => total + gasto.monto, 0);
@@ -46,26 +44,22 @@ document.addEventListener('DOMContentLoaded', function() {
         return (sumaPorcentajes < 1) ? costoBase / (1 - sumaPorcentajes) : costoBase;
     }
 
-    /**
-     * Renderiza el catálogo público en el contenedor HTML.
-     * @param {Array<object>} catalogo - La lista de productos a renderizar.
-     */
     function renderPublicCatalog(catalogo) {
         catalogoClientesContainer.innerHTML = '';
 
         if (!catalogo || catalogo.length === 0) {
-            catalogoClientesVacioMsg.textContent = 'De momento no hay productos en este catálogo.';
+            catalogoClientesVacioMsg.textContent = 'No se encontraron productos con los filtros actuales.';
             catalogoClientesContainer.appendChild(catalogoClientesVacioMsg);
             return;
         }
 
         catalogo.forEach(vela => {
             const card = document.createElement('div');
-            card.className = 'card flex flex-col overflow-hidden rounded-lg shadow-lg p-0'; // Padding a 0 para que la imagen ocupe todo el ancho
+            card.className = 'card flex flex-col overflow-hidden rounded-lg shadow-lg p-0';
 
             const costoTotal = calcularCostoTotalVela(vela);
             let precioVentaMinorista = costoTotal * (1 + (vela.margenGananciaMinorista || 0) / 100);
-            precioVentaMinorista = Math.ceil(precioVentaMinorista); // Redondeo hacia arriba
+            precioVentaMinorista = Math.ceil(precioVentaMinorista);
 
             const imagenHtml = vela.imagenUrl 
                 ? `<img src="${vela.imagenUrl}" alt="${vela.nombre}" class="w-full h-80 object-cover rounded-t-lg shadow-sm cursor-pointer" data-src="${vela.imagenUrl}">`
@@ -88,28 +82,73 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    /**
-     * Obtiene los datos del catálogo público desde Firestore.
-     */
-    async function fetchPublicCatalogData() {
-        // UID específico del usuario cuyo catálogo se mostrará
-        const userId = 'MeVpNiYcH6RSwWzkzLGnvdROYgE3';
+    function renderizarPaginacion(itemsFiltrados) {
+        paginacionContainer.innerHTML = '';
+        const totalPaginas = Math.ceil(itemsFiltrados.length / itemsPorPagina);
 
+        if (totalPaginas <= 1) return;
+
+        const btnAnterior = document.createElement('button');
+        btnAnterior.textContent = 'Anterior';
+        btnAnterior.className = 'btn-neutral';
+        btnAnterior.disabled = paginaActual === 1;
+        btnAnterior.addEventListener('click', () => {
+            if (paginaActual > 1) {
+                paginaActual--;
+                actualizarVistaCatalogo();
+            }
+        });
+        paginacionContainer.appendChild(btnAnterior);
+
+        const indicadorPagina = document.createElement('span');
+        indicadorPagina.className = 'text-lg font-medium';
+        indicadorPagina.textContent = `Página ${paginaActual} de ${totalPaginas}`;
+        paginacionContainer.appendChild(indicadorPagina);
+
+        const btnSiguiente = document.createElement('button');
+        btnSiguiente.textContent = 'Siguiente';
+        btnSiguiente.className = 'btn-neutral';
+        btnSiguiente.disabled = paginaActual === totalPaginas;
+        btnSiguiente.addEventListener('click', () => {
+            if (paginaActual < totalPaginas) {
+                paginaActual++;
+                actualizarVistaCatalogo();
+            }
+        });
+        paginacionContainer.appendChild(btnSiguiente);
+    }
+
+    function actualizarVistaCatalogo() {
+        const textoBusqueda = filtroPublicoNombre.value.toLowerCase();
+        const categoriaSeleccionada = filtroPublicoCategoria.value;
+
+        const catalogoFiltrado = catalogoPublicoCompleto.filter(vela => {
+            const matchNombre = !textoBusqueda || vela.nombre.toLowerCase().includes(textoBusqueda);
+            const matchCategoria = !categoriaSeleccionada || (Array.isArray(vela.categoria) && vela.categoria.includes(categoriaSeleccionada));
+            return matchNombre && matchCategoria;
+        });
+
+        const inicio = (paginaActual - 1) * itemsPorPagina;
+        const fin = inicio + itemsPorPagina;
+        const itemsPagina = catalogoFiltrado.slice(inicio, fin);
+
+        renderPublicCatalog(itemsPagina);
+        renderizarPaginacion(catalogoFiltrado);
+    }
+
+    async function fetchPublicCatalogData() {
+        const userId = 'MeVpNiYcH6RSwWzkzLGnvdROYgE3';
         try {
             const snapshot = await db.collection('usuarios').doc(userId).collection('catalogo').orderBy('createdAt', 'desc').get();
             
             if (snapshot.empty) {
-                renderPublicCatalog([]);
+                catalogoClientesVacioMsg.textContent = 'De momento no hay productos en este catálogo.';
                 return;
             }
             
             catalogoPublicoCompleto = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             
-            // Poblar filtro de categorías
-            const categorias = [...new Set(
-                catalogoPublicoCompleto.flatMap(p => p.categoria || [])
-            )].sort();
-            
+            const categorias = [...new Set(catalogoPublicoCompleto.flatMap(p => p.categoria || []))].sort();
             filtroPublicoCategoria.innerHTML = '<option value="">Todas las categorías</option>';
             categorias.forEach(cat => {
                 const option = document.createElement('option');
@@ -118,8 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 filtroPublicoCategoria.appendChild(option);
             });
 
-            // Renderizar el catálogo completo inicialmente
-            renderPublicCatalog(catalogoPublicoCompleto);
+            actualizarVistaCatalogo();
 
         } catch (error) {
             console.error("Error al cargar el catálogo público:", error);
@@ -127,35 +165,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    /**
-     * Filtra y renderiza el catálogo basado en los inputs de búsqueda y categoría.
-     */
-    function filtrarCatalogo() {
-        const textoBusqueda = filtroPublicoNombre.value.toLowerCase();
-        const categoriaSeleccionada = filtroPublicoCategoria.value;
-
-        const catalogoFiltrado = catalogoPublicoCompleto.filter(vela => {
-            const matchNombre = !textoBusqueda || vela.nombre.toLowerCase().includes(textoBusqueda);
-            
-            let matchCategoria = !categoriaSeleccionada;
-            if (vela.categoria && categoriaSeleccionada) {
-                if (Array.isArray(vela.categoria)) {
-                    matchCategoria = vela.categoria.includes(categoriaSeleccionada);
-                }
-            }
-            return matchNombre && matchCategoria;
-        });
-
-        renderPublicCatalog(catalogoFiltrado);
-    }
-
     // =================================================================
     // 4. ASIGNACIÓN DE EVENT LISTENERS
     // =================================================================
-    filtroPublicoNombre.addEventListener('input', filtrarCatalogo);
-    filtroPublicoCategoria.addEventListener('change', filtrarCatalogo);
+    filtroPublicoNombre.addEventListener('input', () => {
+        paginaActual = 1;
+        actualizarVistaCatalogo();
+    });
+    filtroPublicoCategoria.addEventListener('change', () => {
+        paginaActual = 1;
+        actualizarVistaCatalogo();
+    });
 
-    // --- Event Listeners para Image Modal ---
     catalogoClientesContainer.addEventListener('click', function(e) {
         if (e.target && e.target.dataset.src) {
             imageModalContent.src = e.target.dataset.src;
@@ -165,17 +186,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function closeModal() {
         imageModalOverlay.classList.add('hidden');
-        imageModalContent.src = ''; // Limpia el src para detener la carga si se cierra rápido
+        imageModalContent.src = '';
     }
 
     imageModalClose.addEventListener('click', closeModal);
     imageModalOverlay.addEventListener('click', function(e) {
-        // Cierra el modal solo si se hace clic en el fondo (overlay)
         if (e.target === imageModalOverlay) {
             closeModal();
         }
     });
-
 
     // =================================================================
     // 5. EJECUCIÓN INICIAL
