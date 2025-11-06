@@ -259,6 +259,12 @@
 
             <!-- Sección del Catálogo -->
             <div id="seccion-catalogo">
+                <div class="card mb-6">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <input type="text" id="filtro-catalogo-nombre" placeholder="Buscar por nombre..." class="input-field flex-grow">
+                        <select id="filtro-catalogo-categoria" class="input-field w-full md:w-64"></select>
+                    </div>
+                </div>
                 <div id="catalogo-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <!-- Las tarjetas del catálogo se insertarán aquí -->
                      <p id="catalogo-vacio-msg" class="text-center text-gray-500 col-span-full">El catálogo está vacío. Guarda una receta desde la sección 'Agregar producto' para empezar.</p>
@@ -284,6 +290,20 @@
                             <div>
                                 <label for="receta-caracteristicas" class="block text-sm font-medium text-gray-700 mb-1">Características</label>
                                 <textarea id="receta-caracteristicas" rows="2" placeholder="Ej: Relajante y floral" class="input-field"></textarea>
+                            </div>
+                            <div>
+                                <label for="receta-categoria" class="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+                                <input type="text" id="receta-categoria" list="categorias-sugeridas" placeholder="Ej: Navideña, Floral, Cítrica" class="input-field">
+                                <datalist id="categorias-sugeridas">
+                                    <option value="Navidad"></option>
+                                    <option value="Bautizos"></option>
+                                    <option value="Bodas"></option>
+                                    <option value="Cumpleaños"></option>
+                                    <option value="Floral"></option>
+                                    <option value="Frutal"></option>
+                                    <option value="Cítrica"></option>
+                                    <option value="Relajante"></option>
+                                </datalist>
                             </div>
                             <div>
                                 <label for="receta-imagen" class="block text-sm font-medium text-gray-700 mb-1">Foto del Producto</label>
@@ -751,6 +771,7 @@
             // --- Calculadora de Recetas
             const inputRecetaNombre = document.getElementById('receta-nombre');
             const inputRecetaCaracteristicas = document.getElementById('receta-caracteristicas');
+            const inputRecetaCategoria = document.getElementById('receta-categoria');
             const inputRecetaImagen = document.getElementById('receta-imagen');
             const imagenPreview = document.getElementById('imagen-preview');
             const selectorIngrediente = document.getElementById('ingrediente');
@@ -777,6 +798,8 @@
             // --- Catálogo
             const catalogoContainer = document.getElementById('catalogo-container');
             const catalogoVacioMsg = document.getElementById('catalogo-vacio-msg');
+            const filtroCatalogoNombre = document.getElementById('filtro-catalogo-nombre');
+            const filtroCatalogoCategoria = document.getElementById('filtro-catalogo-categoria');
             const modalOverlay = document.getElementById('detalle-modal-overlay');
             const modalContent = document.getElementById('detalle-modal-content');
             const modalCloseBtn = document.getElementById('modal-close-btn');
@@ -857,6 +880,7 @@
 
                         // Inicializar y renderizar toda la UI
                         poblarSelectorIngredientes();
+                        poblarFiltroCatalogoCategorias();
                         renderizarCatalogo();
                         renderizarReceta();
                         renderizarGastos();
@@ -1023,6 +1047,27 @@
             }
 
             // --- Funciones del Catálogo ---
+            function poblarFiltroCatalogoCategorias() {
+                const categorias = [...new Set(
+                    catalogo.flatMap(p => {
+                        if (Array.isArray(p.categoria)) {
+                            return p.categoria;
+                        }
+                        if (typeof p.categoria === 'string' && p.categoria) {
+                            return [p.categoria]; // Handle old string-based categories
+                        }
+                        return [];
+                    })
+                )].sort();
+                filtroCatalogoCategoria.innerHTML = '<option value="">Todas las categorías</option>';
+                categorias.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat;
+                    option.textContent = cat;
+                    filtroCatalogoCategoria.appendChild(option);
+                });
+            }
+
             async function guardarEnCatalogo() {
                 btnGuardarCatalogo.disabled = true;
                 btnGuardarCatalogo.textContent = 'Guardando...';
@@ -1053,9 +1098,11 @@
                         imagenUrl = await fileRef.getDownloadURL();
                     }
 
+                    const categorias = inputRecetaCategoria.value.split(',').map(c => c.trim()).filter(c => c);
                     const nuevaVela = {
                         nombre: nombre,
                         caracteristicas: inputRecetaCaracteristicas.value.trim(),
+                        categoria: categorias,
                         receta: [...receta],
                         gastosAdicionales: [...gastosAdicionales],
                         pctGastoPerdida: parseFloat(inputGastoPerdidaPct.value) || 0,
@@ -1069,6 +1116,7 @@
                     const docRef = await db.collection('usuarios').doc(currentUser.uid).collection('catalogo').add(nuevaVela);
                     
                     catalogo.push({ id: docRef.id, ...nuevaVela });
+                    poblarFiltroCatalogoCategorias();
                     renderizarCatalogo();
                     alert(`'${nombre}' se ha guardado en el catálogo.`);
                     cambiarSeccion('catalogo');
@@ -1084,10 +1132,30 @@
 
             function renderizarCatalogo() {
                 catalogoContainer.innerHTML = '';
-                if (catalogo.length === 0) {
+
+                const textoBusqueda = filtroCatalogoNombre.value.toLowerCase();
+                const categoriaSeleccionada = filtroCatalogoCategoria.value;
+
+                const catalogoFiltrado = catalogo.filter(vela => {
+                    const matchNombre = !textoBusqueda || vela.nombre.toLowerCase().includes(textoBusqueda);
+                    
+                    let matchCategoria = !categoriaSeleccionada;
+                    if (vela.categoria && categoriaSeleccionada) {
+                        if (Array.isArray(vela.categoria)) {
+                            matchCategoria = vela.categoria.includes(categoriaSeleccionada);
+                        } else if (typeof vela.categoria === 'string') { // For backwards compatibility
+                            matchCategoria = vela.categoria === categoriaSeleccionada;
+                        }
+                    }
+
+                    return matchNombre && matchCategoria;
+                });
+
+                if (catalogoFiltrado.length === 0) {
+                    catalogoVacioMsg.textContent = catalogo.length === 0 ? 'El catálogo está vacío. Guarda una receta para empezar.' : 'No se encontraron productos con los filtros actuales.';
                     catalogoVacioMsg.style.display = 'block';
-                    catalogoContainer.appendChild(catalogoVacioMsg);
-                    renderizarPaginacion();
+                    // Do not append, it's already in the DOM
+                    renderizarPaginacion(catalogoFiltrado);
                     return;
                 }
                 
@@ -1095,19 +1163,25 @@
 
                 const inicio = (paginaActualCatalogo - 1) * itemsPorPagina;
                 const fin = inicio + itemsPorPagina;
-                const itemsPagina = catalogo.slice(inicio, fin);
+                const itemsPagina = catalogoFiltrado.slice(inicio, fin);
 
                 itemsPagina.forEach(vela => {
                     const card = document.createElement('div');
-                    card.className = 'card flex flex-col'; // Added flex-col for better structure
+                    card.className = 'card flex flex-col';
 
                     const costoTotal = calcularCostoTotalVela(vela);
                     const precioVentaMinorista = costoTotal * (1 + (vela.margenGananciaMinorista || 0) / 100);
                     const precioVentaMayorista = costoTotal * (1 + (vela.margenGananciaMayorista || 0) / 100);
 
                     const imagenHtml = vela.imagenUrl 
-                        ? `<img src="${vela.imagenUrl}" alt="${vela.nombre}" class="w-2/5 aspect-square object-cover rounded-t-lg mb-4 mx-auto">`
-                        : '<div class="w-2/5 aspect-square bg-gray-200 rounded-t-lg flex items-center justify-center mb-4 mx-auto"><span class="text-gray-500 text-sm">Sin imagen</span></div>';
+                        ? `<img src="${vela.imagenUrl}" alt="${vela.nombre}" class="w-full h-48 object-cover rounded-t-lg mb-4">`
+                        : '<div class="w-full h-48 bg-gray-200 rounded-t-lg flex items-center justify-center mb-4"><span class="text-gray-500 text-sm">Sin imagen</span></div>';
+
+                    const categoriasHtml = Array.isArray(vela.categoria) && vela.categoria.length > 0
+                        ? `<div class="flex flex-wrap gap-1 mt-2">${vela.categoria.map(c => `<span class="bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-0.5 rounded-full">${c}</span>`).join('')}</div>`
+                        : (typeof vela.categoria === 'string' && vela.categoria) 
+                            ? `<div class="flex flex-wrap gap-1 mt-2"><span class="bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-0.5 rounded-full">${vela.categoria}</span></div>`
+                            : '';
 
                     card.innerHTML = `
                         ${imagenHtml}
@@ -1117,7 +1191,8 @@
                                 <button class="btn-danger btn-sm btn-borrar flex-shrink-0" data-id="${vela.id}">X</button>
                             </div>
                             <p class="text-sm text-gray-500 mb-3 flex-grow">${vela.caracteristicas || ''}</p>
-                            <div class="space-y-2 mt-auto">
+                            ${categoriasHtml}
+                            <div class="space-y-2 mt-auto pt-3">
                                 <div class="flex justify-between text-sm"><span>Costo:</span><span class="font-medium">$${costoTotal.toFixed(2)}</span></div>
                                 <div class="flex justify-between text-lg font-bold text-indigo-600 mt-2 pt-2 border-t"><span>Minorista:</span><span>$${precioVentaMinorista.toFixed(2)}</span></div>
                                 <div class="flex justify-between text-lg font-bold text-teal-600"><span>Mayorista:</span><span>$${precioVentaMayorista.toFixed(2)}</span></div>
@@ -1128,13 +1203,13 @@
                     catalogoContainer.appendChild(card);
                 });
 
-                renderizarPaginacion();
+                renderizarPaginacion(catalogoFiltrado);
             }
 
-            function renderizarPaginacion() {
+            function renderizarPaginacion(items) {
                 const paginacionContainer = document.getElementById('catalogo-paginacion');
                 paginacionContainer.innerHTML = '';
-                const totalPaginas = Math.ceil(catalogo.length / itemsPorPagina);
+                const totalPaginas = Math.ceil(items.length / itemsPorPagina);
 
                 if (totalPaginas <= 1) return;
 
@@ -1180,6 +1255,7 @@
                         Promise.all([deletePromise, imageDeletePromise])
                             .then(() => {
                                 catalogo.splice(velaIndex, 1);
+                                poblarFiltroCatalogoCategorias();
                                 renderizarCatalogo();
                             })
                             .catch(error => {
@@ -1195,19 +1271,25 @@
                 if (!vela) return;
 
                 const imagenPreviewHtml = vela.imagenUrl
-                    ? `<div class="w-full flex justify-center mb-4"><img src="${vela.imagenUrl}" alt="${vela.nombre}" class="max-h-48 rounded-lg"></div>`
-                    : '';
+                    ? `<div class="w-full flex justify-center mb-4"><img id="modal-imagen-preview" src="${vela.imagenUrl}" alt="${vela.nombre}" class="max-h-48 rounded-lg"></div>`
+                    : `<div class="w-full flex justify-center mb-4"><img id="modal-imagen-preview" src="" alt="Vista previa" class="max-h-48 rounded-lg hidden"></div>`;
 
                 let recetaHtml = vela.receta.map((item, index) => `<tr><td class="px-4 py-2">${item.nombre}</td><td class="px-4 py-2"><input type="number" value="${item.cantidad}" class="input-field w-24" data-receta-index="${index}"></td><td class="px-4 py-2">$${item.costo.toFixed(2)}</td></tr>`).join('');
                 let gastosHtml = vela.gastosAdicionales.map((gasto, index) => `<tr><td class="px-4 py-2"><input type="text" value="${gasto.descripcion}" class="input-field w-full" data-gasto-desc-index="${index}"></td><td class="px-4 py-2"><input type="number" value="${gasto.monto}" class="input-field w-24" data-gasto-monto-index="${index}"></td></tr>`).join('');
                 const costoTotal = calcularCostoTotalVela(vela);
                 const precioVentaMinorista = costoTotal * (1 + (vela.margenGananciaMinorista || 0) / 100);
                 const precioVentaMayorista = costoTotal * (1 + (vela.margenGananciaMayorista || 0) / 100);
+                const categoriasStr = Array.isArray(vela.categoria) ? vela.categoria.join(', ') : (vela.categoria || '');
 
                 modalContent.innerHTML = `
                     ${imagenPreviewHtml}
-                    <h2 class="text-2xl font-bold mb-2">${vela.nombre}</h2>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Cambiar Foto del Producto</label>
+                        <input type="file" id="modal-receta-imagen" class="input-field" accept="image/*">
+                    </div>
+                    <div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-1">Nombre del Producto</label><input type="text" id="modal-nombre-producto" class="input-field w-full text-2xl font-bold" value="${vela.nombre}"></div>
                     <div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-1">Características</label><textarea id="modal-caracteristicas" class="input-field w-full" rows="2">${vela.caracteristicas || ''}</textarea></div>
+                    <div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-1">Categorías (separadas por coma)</label><input type="text" id="modal-categoria" class="input-field w-full" value="${categoriasStr}"></div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div><label for="modal-gasto-perdida-pct" class="block text-sm font-medium text-gray-700">Costos por perdida (%)</label><input type="number" id="modal-gasto-perdida-pct" value="${vela.pctGastoPerdida || 0}" class="input-field mt-1"></div>
                         <div><label for="modal-gasto-produccion-pct" class="block text-sm font-medium text-gray-700">Costos de produccion (%)</label><input type="number" id="modal-gasto-produccion-pct" value="${vela.pctGastoProduccion || 0}" class="input-field mt-1"></div>
@@ -1234,56 +1316,102 @@
                     <button class="btn-download w-full mt-6 btn-descargar-modal-pdf" data-id="${vela.id}">Descargar PDF</button>
                 `;
                 modalOverlay.classList.remove('hidden');
+
+                document.getElementById('modal-receta-imagen').addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    const preview = document.getElementById('modal-imagen-preview');
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            preview.src = event.target.result;
+                            preview.classList.remove('hidden');
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
             }
 
-            function guardarCambios(id) {
+            async function guardarCambios(id) {
                 if (!currentUser) return;
                 const velaIndex = catalogo.findIndex(v => v.id === id);
                 if (velaIndex === -1) return;
 
-                const velaOriginal = catalogo[velaIndex];
-                const velaActualizada = { ...velaOriginal };
+                const btnGuardar = document.querySelector('.btn-guardar-cambios');
+                btnGuardar.disabled = true;
+                btnGuardar.textContent = 'Guardando...';
 
-                velaActualizada.caracteristicas = document.getElementById('modal-caracteristicas').value.trim();
-                velaActualizada.pctGastoPerdida = parseFloat(document.getElementById('modal-gasto-perdida-pct').value) || 0;
-                velaActualizada.pctGastoProduccion = parseFloat(document.getElementById('modal-gasto-produccion-pct').value) || 0;
+                try {
+                    const velaOriginal = catalogo[velaIndex];
+                    const velaActualizada = { ...velaOriginal };
 
-                const nuevosReceta = [];
-                document.querySelectorAll('[data-receta-index]').forEach(input => {
-                    const index = parseInt(input.dataset.recetaIndex, 10);
-                    const nuevaCantidad = parseFloat(input.value);
-                    const itemOriginal = velaOriginal.receta[index];
-                    const producto = productos.find(p => p.nombre === itemOriginal.nombre);
-                    
-                    if (producto && nuevaCantidad > 0) {
-                        nuevosReceta.push({ nombre: itemOriginal.nombre, cantidad: nuevaCantidad, costo: producto.precio_por_gramo * nuevaCantidad });
+                    // Handle image update
+                    const fileInput = document.getElementById('modal-receta-imagen');
+                    const file = fileInput.files[0];
+
+                    if (file) {
+                        // Upload new image
+                        const filePath = `usuarios/${currentUser.uid}/catalogo_imagenes/${Date.now()}_${file.name}`;
+                        const fileRef = storage.ref(filePath);
+                        await fileRef.put(file);
+                        velaActualizada.imagenUrl = await fileRef.getDownloadURL();
+
+                        // Delete old image if it exists
+                        if (velaOriginal.imagenUrl) {
+                            try {
+                                await storage.refFromURL(velaOriginal.imagenUrl).delete();
+                            } catch (imgError) {
+                                console.warn("No se pudo borrar la imagen anterior, puede que ya no exista:", imgError);
+                            }
+                        }
                     }
-                });
-                velaActualizada.receta = nuevosReceta;
 
-                const nuevosGastos = [];
-                document.querySelectorAll('[data-gasto-desc-index]').forEach((inputDesc, i) => {
-                    const inputMonto = document.querySelector(`[data-gasto-monto-index="${i}"]`);
-                    const nuevaDescripcion = inputDesc.value.trim();
-                    const nuevoMonto = parseFloat(inputMonto.value);
+                    velaActualizada.nombre = document.getElementById('modal-nombre-producto').value.trim();
+                    velaActualizada.caracteristicas = document.getElementById('modal-caracteristicas').value.trim();
+                    const categoriasInput = document.getElementById('modal-categoria').value;
+                    velaActualizada.categoria = categoriasInput.split(',').map(c => c.trim()).filter(c => c);
+                    velaActualizada.pctGastoPerdida = parseFloat(document.getElementById('modal-gasto-perdida-pct').value) || 0;
+                    velaActualizada.pctGastoProduccion = parseFloat(document.getElementById('modal-gasto-produccion-pct').value) || 0;
 
-                    if (nuevaDescripcion && nuevoMonto > 0) {
-                        nuevosGastos.push({ descripcion: nuevaDescripcion, monto: nuevoMonto });
-                    }
-                });
-                velaActualizada.gastosAdicionales = nuevosGastos;
-
-                db.collection('usuarios').doc(currentUser.uid).collection('catalogo').doc(id).update(velaActualizada)
-                    .then(() => {
-                        catalogo[velaIndex] = { id, ...velaActualizada };
-                        renderizarCatalogo();
-                        modalOverlay.classList.add('hidden');
-                        alert('¡Cambios guardados con éxito!');
-                    })
-                    .catch(error => {
-                        console.error("Error al guardar cambios: ", error);
-                        alert("Hubo un error al guardar los cambios.");
+                    const nuevosReceta = [];
+                    document.querySelectorAll('[data-receta-index]').forEach(input => {
+                        const index = parseInt(input.dataset.recetaIndex, 10);
+                        const nuevaCantidad = parseFloat(input.value);
+                        const itemOriginal = velaOriginal.receta[index];
+                        const producto = productos.find(p => p.nombre === itemOriginal.nombre);
+                        
+                        if (producto && nuevaCantidad > 0) {
+                            nuevosReceta.push({ nombre: itemOriginal.nombre, cantidad: nuevaCantidad, costo: producto.precio_por_gramo * nuevaCantidad });
+                        }
                     });
+                    velaActualizada.receta = nuevosReceta;
+
+                    const nuevosGastos = [];
+                    document.querySelectorAll('[data-gasto-desc-index]').forEach((inputDesc, i) => {
+                        const inputMonto = document.querySelector(`[data-gasto-monto-index="${i}"]`);
+                        const nuevaDescripcion = inputDesc.value.trim();
+                        const nuevoMonto = parseFloat(inputMonto.value);
+
+                        if (nuevaDescripcion && nuevoMonto > 0) {
+                            nuevosGastos.push({ descripcion: nuevaDescripcion, monto: nuevoMonto });
+                        }
+                    });
+                    velaActualizada.gastosAdicionales = nuevosGastos;
+
+                    await db.collection('usuarios').doc(currentUser.uid).collection('catalogo').doc(id).update(velaActualizada);
+                    
+                    catalogo[velaIndex] = { id, ...velaActualizada };
+                    poblarFiltroCatalogoCategorias();
+                    renderizarCatalogo();
+                    modalOverlay.classList.add('hidden');
+                    alert('¡Cambios guardados con éxito!');
+
+                } catch (error) {
+                    console.error("Error al guardar cambios: ", error);
+                    alert("Hubo un error al guardar los cambios.");
+                } finally {
+                    btnGuardar.disabled = false;
+                    btnGuardar.textContent = 'Guardar Cambios';
+                }
             }
 
             function calcularCostoTotalVela(vela) {
@@ -1809,6 +1937,7 @@
                 gastosAdicionales = [];
                 inputRecetaNombre.value = '';
                 inputRecetaCaracteristicas.value = '';
+                inputRecetaCategoria.value = '';
                 inputRecetaImagen.value = '';
                 imagenPreview.classList.add('hidden');
                 imagenPreview.src = '';
@@ -1838,6 +1967,15 @@
             });
 
             // --- Catálogo y Modales
+            filtroCatalogoNombre.addEventListener('input', () => {
+                paginaActualCatalogo = 1;
+                renderizarCatalogo();
+            });
+            filtroCatalogoCategoria.addEventListener('change', () => {
+                paginaActualCatalogo = 1;
+                renderizarCatalogo();
+            });
+
             catalogoContainer.addEventListener('click', (e) => {
                 if (e.target.classList.contains('btn-borrar')) borrarDelCatalogo(e.target.dataset.id);
                 if (e.target.classList.contains('btn-ver-detalles')) mostrarDetalles(e.target.dataset.id);
