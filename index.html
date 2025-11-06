@@ -1024,58 +1024,62 @@
 
             // --- Funciones del Catálogo ---
             async function guardarEnCatalogo() {
-                if (!currentUser) return alert('Debes iniciar sesión para guardar en el catálogo.');
-                
-                const nombre = inputRecetaNombre.value.trim();
-                if (!nombre) {
-                    alert('Por favor, asigna un nombre a la receta antes de guardarla.');
-                    return;
-                }
-                if (receta.length === 0) {
-                    alert('No puedes guardar una receta vacía.');
-                    return;
-                }
+                btnGuardarCatalogo.disabled = true;
+                btnGuardarCatalogo.textContent = 'Guardando...';
 
-                let imagenUrl = null;
-                const file = inputRecetaImagen.files[0];
-
-                if (file) {
-                    const filePath = `usuarios/${currentUser.uid}/catalogo_imagenes/${Date.now()}_${file.name}`;
-                    const fileRef = storage.ref(filePath);
-                    try {
-                        await fileRef.put(file);
-                        imagenUrl = await fileRef.getDownloadURL();
-                    } catch (error) {
-                        console.error("Error al subir la imagen: ", error);
-                        alert("Hubo un error al subir la imagen. No se pudo guardar la vela.");
+                try {
+                    if (!currentUser) {
+                        alert('Debes iniciar sesión para guardar en el catálogo.');
                         return;
                     }
+                    
+                    const nombre = inputRecetaNombre.value.trim();
+                    if (!nombre) {
+                        alert('Por favor, asigna un nombre a la receta antes de guardarla.');
+                        return;
+                    }
+                    if (receta.length === 0) {
+                        alert('No puedes guardar una receta vacía.');
+                        return;
+                    }
+
+                    let imagenUrl = null;
+                    const file = inputRecetaImagen.files[0];
+
+                    if (file) {
+                        const filePath = `usuarios/${currentUser.uid}/catalogo_imagenes/${Date.now()}_${file.name}`;
+                        const fileRef = storage.ref(filePath);
+                        await fileRef.put(file);
+                        imagenUrl = await fileRef.getDownloadURL();
+                    }
+
+                    const nuevaVela = {
+                        nombre: nombre,
+                        caracteristicas: inputRecetaCaracteristicas.value.trim(),
+                        receta: [...receta],
+                        gastosAdicionales: [...gastosAdicionales],
+                        pctGastoPerdida: parseFloat(inputGastoPerdidaPct.value) || 0,
+                        pctGastoProduccion: parseFloat(inputGastoProduccionPct.value) || 0,
+                        margenGananciaMinorista: parseFloat(inputGananciaMinorista.value) || 0,
+                        margenGananciaMayorista: parseFloat(inputGananciaMayorista.value) || 0,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        ...(imagenUrl && { imagenUrl: imagenUrl })
+                    };
+
+                    const docRef = await db.collection('usuarios').doc(currentUser.uid).collection('catalogo').add(nuevaVela);
+                    
+                    catalogo.push({ id: docRef.id, ...nuevaVela });
+                    renderizarCatalogo();
+                    alert(`'${nombre}' se ha guardado en el catálogo.`);
+                    cambiarSeccion('catalogo');
+
+                } catch (error) {
+                    console.error("Error al guardar en catálogo: ", error);
+                    alert("Hubo un error al guardar la vela. Revisa la consola para más detalles.");
+                } finally {
+                    btnGuardarCatalogo.disabled = false;
+                    btnGuardarCatalogo.textContent = 'Guardar en Catálogo';
                 }
-
-                const nuevaVela = {
-                    nombre: nombre,
-                    caracteristicas: inputRecetaCaracteristicas.value.trim(),
-                    receta: [...receta],
-                    gastosAdicionales: [...gastosAdicionales],
-                    pctGastoPerdida: parseFloat(inputGastoPerdidaPct.value) || 0,
-                    pctGastoProduccion: parseFloat(inputGastoProduccionPct.value) || 0,
-                    margenGananciaMinorista: parseFloat(inputGananciaMinorista.value) || 0,
-                    margenGananciaMayorista: parseFloat(inputGananciaMayorista.value) || 0,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    ...(imagenUrl && { imagenUrl: imagenUrl })
-                };
-
-                db.collection('usuarios').doc(currentUser.uid).collection('catalogo').add(nuevaVela)
-                    .then(docRef => {
-                        catalogo.push({ id: docRef.id, ...nuevaVela });
-                        renderizarCatalogo();
-                        alert(`'${nombre}' se ha guardado en el catálogo.`);
-                        cambiarSeccion('catalogo');
-                    })
-                    .catch(error => {
-                        console.error("Error al guardar en catálogo: ", error);
-                        alert("Hubo un error al guardar la vela.");
-                    });
             }
 
             function renderizarCatalogo() {
