@@ -242,9 +242,9 @@
                     </div>
                     <div class="mt-4 md:mt-0 flex items-center justify-center flex-shrink-0">
                         <span id="user-email" class="text-sm text-gray-600 mr-4 truncate"></span>
-                        <div id="share-container" class="mr-4 hidden">
+                        <div id="share-container" class="mr-4 hidden flex items-center gap-2">
                             <button id="compartir-catalogo-btn" class="btn-secondary btn-sm">Compartir Catálogo</button>
-                            <input type="text" id="enlace-catalogo" readonly class="input-field text-sm p-1 w-64" placeholder="Tu enlace de catálogo...">
+                            <span id="mensaje-copiado" class="text-sm text-green-600 hidden">¡Copiado!</span>
                         </div>
                         <button id="logout-btn" class="btn-danger flex-shrink-0">Cerrar Sesión</button>
                     </div>
@@ -862,7 +862,7 @@
             // --- Compartir Catálogo
             const shareContainer = document.getElementById('share-container');
             const compartirCatalogoBtn = document.getElementById('compartir-catalogo-btn');
-            const enlaceCatalogoInput = document.getElementById('enlace-catalogo');
+            const mensajeCopiadoSpan = document.getElementById('mensaje-copiado');
 
             // =================================================================
             // 4. DEFINICIÓN DE FUNCIONES
@@ -2231,24 +2231,21 @@
             compartirCatalogoBtn.addEventListener('click', () => {
                 if (currentUser) {
                     const userId = currentUser.uid;
-                    const baseURL = "catalogo.html";
-                    // Construye la URL usando el origen actual para que funcione tanto local como en producción
-                    const enlaceCompleto = `${window.location.origin}/${baseURL}?user=${userId}`;
                     
-                    // Guardar el placeholder original
-                    const originalPlaceholder = enlaceCatalogoInput.placeholder;
+                    // Lógica ultra simplificada para máxima compatibilidad
+                    const enlaceCompleto = `catalogo.html?user=${userId}`;
 
                     navigator.clipboard.writeText(enlaceCompleto).then(() => {
-                        enlaceCatalogoInput.value = enlaceCompleto; // Asegura que el enlace esté visible
-                        enlaceCatalogoInput.placeholder = "¡Enlace copiado!"; // Confirmación visual
+                        mensajeCopiadoSpan.classList.remove('hidden'); // Mostrar mensaje
+                        compartirCatalogoBtn.classList.add('hidden'); // Ocultar botón temporalmente
                         
                         setTimeout(() => {
-                            enlaceCatalogoInput.placeholder = originalPlaceholder; // Restaurar placeholder
+                            mensajeCopiadoSpan.classList.add('hidden'); // Ocultar mensaje
+                            compartirCatalogoBtn.classList.remove('hidden'); // Mostrar botón de nuevo
                         }, 2500); // Mostrar mensaje por 2.5 segundos
                     }).catch(err => {
                         console.error('Error al copiar el enlace: ', err);
-                        alert("No se pudo copiar el enlace automáticamente. Por favor, cópialo manualmente.");
-                        enlaceCatalogoInput.value = enlaceCompleto; // Asegura que el enlace esté visible para copia manual
+                        alert("No se pudo copiar el enlace automáticamente. Por favor, cópialo manualmente: " + enlaceCompleto);
                     });
                 } else {
                     alert("Por favor, inicia sesión para poder compartir tu catálogo.");
