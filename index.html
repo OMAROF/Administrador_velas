@@ -242,6 +242,10 @@
                     </div>
                     <div class="mt-4 md:mt-0 flex items-center justify-center flex-shrink-0">
                         <span id="user-email" class="text-sm text-gray-600 mr-4 truncate"></span>
+                        <div id="share-container" class="mr-4 hidden">
+                            <button id="compartir-catalogo-btn" class="btn-secondary btn-sm">Compartir Catálogo</button>
+                            <input type="text" id="enlace-catalogo" readonly class="input-field text-sm p-1 w-64" placeholder="Tu enlace de catálogo...">
+                        </div>
                         <button id="logout-btn" class="btn-danger flex-shrink-0">Cerrar Sesión</button>
                     </div>
                 </div>
@@ -854,6 +858,11 @@
             const btnDescargarDatos = document.getElementById('btn-descargar-datos');
             const filtroInsumoNombre = document.getElementById('filtro-insumo-nombre');
             const filtroInsumoCategoria = document.getElementById('filtro-insumo-categoria');
+
+            // --- Compartir Catálogo
+            const shareContainer = document.getElementById('share-container');
+            const compartirCatalogoBtn = document.getElementById('compartir-catalogo-btn');
+            const enlaceCatalogoInput = document.getElementById('enlace-catalogo');
 
             // =================================================================
             // 4. DEFINICIÓN DE FUNCIONES
@@ -2201,22 +2210,50 @@
             }
 
             // Primero, manejar la ruta. Si es una ruta pública, no continuamos con la lógica de autenticación.
-            if (!manejarRuta()) {
-                auth.onAuthStateChanged(user => {
-                    if (user) {
-                        currentUser = user;
-                        authContainer.classList.add('hidden');
-                        appContainer.classList.remove('hidden');
-                        userEmailSpan.textContent = user.email;
-                        inicializarAplicacion();
-                    } else {
-                        currentUser = null;
-                        authContainer.classList.remove('hidden');
-                        appContainer.classList.add('hidden');
-                        userEmailSpan.textContent = '';
-                    }
-                });
-            }
+            // --- Observador del estado de autenticación
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    currentUser = user;
+                    userEmailSpan.textContent = user.email;
+                    authContainer.classList.add('hidden');
+                    appContainer.classList.remove('hidden');
+                    shareContainer.classList.remove('hidden'); // Mostrar contenedor de compartir
+                    inicializarAplicacion();
+                } else {
+                    currentUser = null;
+                    authContainer.classList.remove('hidden');
+                    appContainer.classList.add('hidden');
+                    shareContainer.classList.add('hidden'); // Ocultar contenedor de compartir
+                }
+            });
+
+            // --- Lógica para compartir catálogo
+            compartirCatalogoBtn.addEventListener('click', () => {
+                if (currentUser) {
+                    const userId = currentUser.uid;
+                    const baseURL = "catalogo.html";
+                    // Construye la URL usando el origen actual para que funcione tanto local como en producción
+                    const enlaceCompleto = `${window.location.origin}/${baseURL}?user=${userId}`;
+                    
+                    // Guardar el placeholder original
+                    const originalPlaceholder = enlaceCatalogoInput.placeholder;
+
+                    navigator.clipboard.writeText(enlaceCompleto).then(() => {
+                        enlaceCatalogoInput.value = enlaceCompleto; // Asegura que el enlace esté visible
+                        enlaceCatalogoInput.placeholder = "¡Enlace copiado!"; // Confirmación visual
+                        
+                        setTimeout(() => {
+                            enlaceCatalogoInput.placeholder = originalPlaceholder; // Restaurar placeholder
+                        }, 2500); // Mostrar mensaje por 2.5 segundos
+                    }).catch(err => {
+                        console.error('Error al copiar el enlace: ', err);
+                        alert("No se pudo copiar el enlace automáticamente. Por favor, cópialo manualmente.");
+                        enlaceCatalogoInput.value = enlaceCompleto; // Asegura que el enlace esté visible para copia manual
+                    });
+                } else {
+                    alert("Por favor, inicia sesión para poder compartir tu catálogo.");
+                }
+            });
         });
     </script>
 </body>
