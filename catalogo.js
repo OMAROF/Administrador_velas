@@ -145,7 +145,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function fetchPublicCatalogData() {
-        const userId = 'MeVpNiYcH6RSwWzkzLGnvdROYgE3';
+        const params = new URLSearchParams(window.location.search);
+        const userId = params.get('user');
+
+        if (!userId) {
+            catalogoClientesVacioMsg.textContent = 'No se ha especificado un catálogo. El enlace puede ser incorrecto.';
+            return;
+        }
+
         try {
             const snapshot = await db.collection('usuarios').doc(userId).collection('catalogo').orderBy('createdAt', 'desc').get();
             
@@ -169,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         } catch (error) {
             console.error("Error al cargar el catálogo público:", error);
-            catalogoClientesVacioMsg.textContent = 'No se pudo cargar el catálogo. Inténtalo de nuevo más tarde.';
+            catalogoClientesVacioMsg.textContent = 'No se pudo cargar el catálogo. Verifica el enlace o inténtalo de nuevo más tarde.';
         }
     }
 
