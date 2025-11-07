@@ -40,7 +40,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFileUpload, label, multiple =
         <UploadIcon className="w-6 h-6 text-gray-400" />
         <span className="font-medium text-gray-500">
           {label}
-          <span className="text-indigo-500 underline ml-1">browse</span>
+          <span className="text-indigo-500 underline ml-1">explorar</span>
         </span>
       </span>
       <input

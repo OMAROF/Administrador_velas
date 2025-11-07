@@ -12,7 +12,7 @@ const ImagePreview: React.FC<{ image: ImageFile; onRemove: (id: string) => void 
       <button
         onClick={() => onRemove(image.id)}
         className="absolute top-0 right-0 p-1 bg-white bg-opacity-70 rounded-full text-gray-800 opacity-0 group-hover:opacity-100 transition-opacity"
-        aria-label="Remove image"
+        aria-label="Quitar imagen"
       >
         <XCircleIcon className="w-5 h-5" />
       </button>
@@ -65,7 +65,7 @@ export default function App() {
   
   const handleStartGeneration = async () => {
     if (!primaryImage) {
-      setError("Please upload a primary image to edit.");
+      setError("Por favor, sube una imagen principal para editar.");
       return;
     }
     
@@ -87,12 +87,12 @@ export default function App() {
 
   const handleConfirmAndGenerate = async () => {
      if (!primaryImage) {
-      setError("Primary image is missing.");
+      setError("Falta la imagen principal.");
       setStep('initial');
       return;
     }
      if (!prompt.trim()) {
-      setError("Please enter a prompt to describe your edits.");
+      setError("Por favor, ingresa una descripción para tus ediciones.");
       setStep('initial');
       return;
     }
@@ -102,11 +102,11 @@ export default function App() {
     setStep('generating');
     
     try {
-      let detailedPrompt = `The first image provided is the primary image, containing the main subject. You must not modify the shape, colors, or features of this main subject. Preserve it exactly as it is.`;
+      let detailedPrompt = `La primera imagen proporcionada es la imagen principal, que contiene el sujeto principal. No debes modificar la forma, los colores ni las características de este sujeto principal. Presérvalo exactamente como está.`;
       if (referenceImages.length > 0) {
-        detailedPrompt += ` The subsequent images are for reference only; use them as inspiration for the background or scene.`;
+        detailedPrompt += ` Las imágenes siguientes son solo de referencia; úsalas como inspiración para el fondo o la escena.`;
       }
-      detailedPrompt += ` Now, apply the user's request to the image: "${prompt}"`;
+      detailedPrompt += ` Ahora, aplica la solicitud del usuario a la imagen: "${prompt}"`;
 
       const result = await generateImage(detailedPrompt, primaryImage, referenceImages);
       setGeneratedImage(result);
@@ -132,7 +132,7 @@ export default function App() {
     link.href = generatedImage;
     const mimeType = generatedImage.split(';')[0].split(':')[1] || 'image/png';
     const extension = mimeType.split('/')[1] || 'png';
-    link.download = `ai-generated-image-${Date.now()}.${extension}`;
+    link.download = `imagen-generada-ia-${Date.now()}.${extension}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -146,27 +146,27 @@ export default function App() {
         return (
           <div className="text-center text-gray-600">
             <Spinner className="w-12 h-12 mx-auto mb-4" />
-            <p className="text-lg">Identifying subject...</p>
-            <p className="text-sm">The AI is analyzing your primary image.</p>
+            <p className="text-lg">Identificando el sujeto...</p>
+            <p className="text-sm">La IA está analizando tu imagen principal.</p>
           </div>
         );
       }
       if (identifiedSubjectImage) {
         return (
           <div className="text-center">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800">Confirm Subject</h2>
-            <p className="text-gray-600 mb-4">Is this the main subject you want to keep unchanged?</p>
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Confirmar Sujeto</h2>
+            <p className="text-gray-600 mb-4">¿Es este el sujeto principal que quieres mantener sin cambios?</p>
             <div className="bg-checkered-pattern p-2 rounded-lg inline-block">
-                <img src={identifiedSubjectImage} alt="Identified subject" className="max-h-64 mx-auto rounded-md" />
+                <img src={identifiedSubjectImage} alt="Sujeto identificado" className="max-h-64 mx-auto rounded-md" />
             </div>
             <div className="flex justify-center gap-4 mt-6">
               <button onClick={handleCancelValidation} className="flex items-center gap-2 px-6 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition-colors">
                 <XCircleIcon className="w-5 h-5" />
-                Cancel
+                Cancelar
               </button>
               <button onClick={handleConfirmAndGenerate} className="flex items-center gap-2 px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors">
                 <CheckCircleIcon className="w-5 h-5" />
-                Confirm & Generate
+                Confirmar y Generar
               </button>
             </div>
           </div>
@@ -178,8 +178,8 @@ export default function App() {
       return (
         <div className="text-center text-gray-600">
           <Spinner className="w-12 h-12 mx-auto mb-4" />
-          <p className="text-lg">AI is creating your image...</p>
-          <p className="text-sm">This may take a moment.</p>
+          <p className="text-lg">La IA está creando tu imagen...</p>
+          <p className="text-sm">Esto puede tardar un momento.</p>
         </div>
       );
     }
@@ -198,17 +198,17 @@ export default function App() {
         return (
             <div className="w-full">
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Generated Image</h2>
+                <h2 className="text-xl font-semibold">Imagen Generada</h2>
                 <button
                     onClick={handleDownload}
                     className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors"
-                    aria-label="Download generated image"
+                    aria-label="Descargar imagen generada"
                 >
                     <DownloadIcon className="w-5 h-5" />
-                    Download
+                    Descargar
                 </button>
             </div>
-            <img src={generatedImage} alt="Generated result" className="w-full h-auto object-contain rounded-lg max-h-[75vh]" />
+            <img src={generatedImage} alt="Resultado generado" className="w-full h-auto object-contain rounded-lg max-h-[75vh]" />
             </div>
         );
     }
@@ -216,7 +216,7 @@ export default function App() {
     return (
         <div className="text-center text-gray-500">
             <ImageIcon className="w-20 h-20 mx-auto mb-4"/>
-            <p className="text-lg">Your generated image will appear here.</p>
+            <p className="text-lg">Tu imagen generada aparecerá aquí.</p>
         </div>
     );
   };
@@ -237,9 +237,9 @@ export default function App() {
       `}</style>
       <header className="bg-white/70 backdrop-blur-sm border-b border-gray-200 p-4 text-center sticky top-0 z-10">
         <h1 className="text-2xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600">
-          AI Image Editor
+          Editor de Imágenes con IA
         </h1>
-        <p className="text-gray-600 mt-1">Edit photos with text prompts and reference images using Gemini.</p>
+        <p className="text-gray-600 mt-1">Edita fotos con descripciones de texto e imágenes de referencia usando Gemini.</p>
       </header>
       
       <main className="p-4 md:p-8">
@@ -247,26 +247,26 @@ export default function App() {
           {/* Controls Column */}
           <div className="flex flex-col gap-6 p-6 bg-white rounded-lg shadow-md">
             <div>
-              <h2 className="text-lg font-semibold mb-2 text-indigo-600">1. Upload Primary Image</h2>
+              <h2 className="text-lg font-semibold mb-2 text-indigo-600">1. Sube la Imagen Principal</h2>
               {primaryImage ? (
                 <div className="relative group w-full">
-                  <img src={primaryImage.preview} alt="Primary preview" className="w-full h-auto object-contain rounded-lg max-h-96" />
+                  <img src={primaryImage.preview} alt="Vista previa principal" className="w-full h-auto object-contain rounded-lg max-h-96" />
                    <button
                         onClick={removePrimaryImage}
                         className="absolute top-2 right-2 p-1.5 bg-white bg-opacity-70 rounded-full text-gray-800 opacity-0 group-hover:opacity-100 transition-opacity"
-                        aria-label="Remove image"
+                        aria-label="Quitar imagen"
                     >
                         <XCircleIcon className="w-6 h-6" />
                     </button>
                 </div>
               ) : (
-                <FileUpload onFileUpload={handlePrimaryImageUpload} label="Drop your main photo here, or"/>
+                <FileUpload onFileUpload={handlePrimaryImageUpload} label="Arrastra tu foto principal aquí, o "/>
               )}
             </div>
             
             <div>
-              <h2 className="text-lg font-semibold mb-2 text-indigo-600">2. Add Reference Images (Optional)</h2>
-              <FileUpload onFileUpload={handleReferenceImageUpload} label="Drop reference photos here, or" multiple />
+              <h2 className="text-lg font-semibold mb-2 text-indigo-600">2. Añade Imágenes de Referencia (Opcional)</h2>
+              <FileUpload onFileUpload={handleReferenceImageUpload} label="Arrastra fotos de referencia aquí, o " multiple />
               {referenceImages.length > 0 && (
                 <div className="mt-4 flex flex-wrap gap-4">
                   {referenceImages.map(img => (
@@ -277,11 +277,11 @@ export default function App() {
             </div>
             
             <div>
-              <h2 className="text-lg font-semibold mb-2 text-indigo-600">3. Describe Your Edit</h2>
+              <h2 className="text-lg font-semibold mb-2 text-indigo-600">3. Describe tu Edición</h2>
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                placeholder='e.g., "Change the background to a beach at sunset" or "Apply a retro, vintage filter"'
+                placeholder='Ej: "Cambia el fondo a una playa al atardecer" o "Aplica un filtro retro y antiguo"'
                 className="w-full h-28 p-3 bg-white border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
               />
             </div>
@@ -299,12 +299,12 @@ export default function App() {
                   {isLoading || isIdentifying ? (
                     <>
                       <Spinner className="w-6 h-6"/>
-                      Processing...
+                      Procesando...
                     </>
                   ) : (
                     <>
                       <SparklesIcon className="w-6 h-6" />
-                      Generate Image
+                      Generar Imagen
                     </>
                   )}
                 </button>

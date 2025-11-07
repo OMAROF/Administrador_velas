@@ -29,7 +29,7 @@ export const identifySubject = async (
   
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const primaryImagePart = await fileToGenerativePart(primaryImage.file);
-  const promptPart = { text: "Isolate the main subject from this image. Make the background transparent." };
+  const promptPart = { text: "Aísla el sujeto principal de esta imagen. Haz el fondo transparente." };
 
   try {
     const response: GenerateContentResponse = await ai.models.generateContent({
@@ -46,13 +46,13 @@ export const identifySubject = async (
         return `data:${part.inlineData.mimeType};base64,${base64ImageBytes}`;
       }
     }
-    throw new Error("Could not identify a subject in the image.");
+    throw new Error("No se pudo identificar un sujeto en la imagen.");
   } catch (error) {
-    console.error("Error identifying subject with Gemini:", error);
+    console.error("Error al identificar el sujeto con Gemini:", error);
     if (error instanceof Error) {
-        return Promise.reject(`Failed to identify subject: ${error.message}`);
+        return Promise.reject(`Fallo al identificar el sujeto: ${error.message}`);
     }
-    return Promise.reject("An unknown error occurred during subject identification.");
+    return Promise.reject("Ocurrió un error desconocido durante la identificación del sujeto.");
   }
 };
 
@@ -95,13 +95,13 @@ export const generateImage = async (
       }
     }
 
-    throw new Error("No image was generated. Please check your prompt and images.");
+    throw new Error("No se generó ninguna imagen. Por favor, revisa tu descripción e imágenes.");
 
   } catch (error) {
-    console.error("Error generating image with Gemini:", error);
+    console.error("Error al generar la imagen con Gemini:", error);
     if (error instanceof Error) {
-        return Promise.reject(`Failed to generate image: ${error.message}`);
+        return Promise.reject(`Fallo al generar la imagen: ${error.message}`);
     }
-    return Promise.reject("An unknown error occurred during image generation.");
+    return Promise.reject("Ocurrió un error desconocido durante la generación de la imagen.");
   }
 };
