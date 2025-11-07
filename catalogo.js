@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <button data-description="${descripcionEscapada}" class="text-sm text-indigo-600 hover:text-indigo-800 font-semibold mt-2 mb-4 focus:outline-none self-start">Más detalles</button>
                     <div class="mt-auto">
                         <p class="text-2xl font-extrabold text-gray-900 text-center mb-4">$${precioVentaMinorista.toFixed(2)} MXN</p>
-                        <a href="https://wa.me/5211234567890?text=Hola,%20me%20interesa%20el%20producto%20'${encodeURIComponent(vela.nombre)}'" target="_blank" rel="noopener noreferrer" class="block w-full text-center bg-green-500 text-white font-bold py-2 px-3 text-sm rounded-lg hover:bg-green-600 transition-colors duration-300">
+                        <a href="https://wa.me/529994975170?text=Hola,%20me%20interesa%20el%20producto%20'${encodeURIComponent(vela.nombre)}'" target="_blank" rel="noopener noreferrer" class="block w-full text-center bg-green-500 text-white font-bold py-2 px-3 text-sm rounded-lg hover:bg-green-600 transition-colors duration-300">
                             Contactar por WhatsApp
                         </a>
                     </div>
