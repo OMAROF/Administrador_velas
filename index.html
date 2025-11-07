@@ -1319,7 +1319,7 @@
                         ${vela.imagenUrl ? `<button class="btn-secondary btn-ver-imagen-completa" data-imagen-url="${vela.imagenUrl}">Ver Imagen</button>` : ''}
                         <button class="btn-primary btn-guardar-cambios" data-id="${vela.id}">Guardar Cambios</button>
                     </div>
-                    <button class="btn-download w-full mt-6 btn-descargar-modal-pdf" data-id="${vela.id}">Descargar PDF</button>
+
                 `;
                 modalOverlay.classList.remove('hidden');
 
@@ -1675,10 +1675,6 @@
                 const doc = new jsPDF();
             }
 
-            function generarPDF() {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
-            }
 
             // --- Funciones de Gestión de Insumos ---
             function cargarInsumosDesdeExcel(file) {
@@ -2135,7 +2131,7 @@
                     const costoTotal = calcularCostoTotalVela(vela);
                     const precioVentaMinorista = costoTotal * (1 + (vela.margenGananciaMinorista || 0) / 100);
                     
-                    const numeroWhatsApp = '5211234567890'; 
+                    const numeroWhatsApp = '52999 497 5170'; 
                     const mensajeWhatsApp = encodeURIComponent(`Hola, estoy interesado/a en el producto: ${vela.nombre}`);
                     const whatsappUrl = `https://wa.me/${numeroWhatsApp}?text=${mensajeWhatsApp}`;
 
