@@ -70,6 +70,25 @@
         .hidden {
             display: none;
         }
+        .modal-content-text {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            max-width: 90vw;
+            width: 500px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        .modal-close-btn-text {
+            font-size: 2rem;
+            line-height: 1;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .modal-close-btn-text:hover {
+            color: #1f2937;
+        }
     </style>
 </head>
 <body class="bg-gray-100 antialiased text-gray-800">
@@ -97,6 +116,17 @@
     <div id="image-modal-overlay" class="modal-overlay hidden">
         <span id="image-modal-close" class="modal-close-btn">&times;</span>
         <img id="image-modal-content" src="" alt="Vista ampliada del producto" class="modal-content-image">
+    </div>
+
+    <!-- Modal para detalles de texto -->
+    <div id="details-modal-overlay" class="modal-overlay hidden">
+        <div class="modal-content-text">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Detalles del Producto</h3>
+                <span id="details-modal-close" class="modal-close-btn-text">&times;</span>
+            </div>
+            <p id="details-modal-content" class="text-gray-600"></p>
+        </div>
     </div>
 
     <script src="catalogo.js"></script>

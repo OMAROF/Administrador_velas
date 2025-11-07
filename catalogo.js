@@ -21,12 +21,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const catalogoClientesVacioMsg = document.getElementById('catalogo-clientes-vacio-msg');
     const filtroPublicoNombre = document.getElementById('filtro-publico-nombre');
     const filtroPublicoCategoria = document.getElementById('filtro-publico-categoria');
+    const paginacionContainer = document.getElementById('catalogo-publico-paginacion');
+    
+    // Modales
     const imageModalOverlay = document.getElementById('image-modal-overlay');
     const imageModalContent = document.getElementById('image-modal-content');
     const imageModalClose = document.getElementById('image-modal-close');
-    const paginacionContainer = document.getElementById('catalogo-publico-paginacion');
+    const detailsModalOverlay = document.getElementById('details-modal-overlay');
+    const detailsModalContent = document.getElementById('details-modal-content');
+    const detailsModalClose = document.getElementById('details-modal-close');
 
-    let catalogoPublicoCompleto = []; // Almacenará todos los productos sin filtrar
+    let catalogoPublicoCompleto = [];
     let paginaActual = 1;
     const itemsPorPagina = 10;
 
@@ -65,14 +70,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 ? `<img src="${vela.imagenUrl}" alt="${vela.nombre}" class="w-full h-72 object-cover rounded-t-lg shadow-sm cursor-pointer" data-src="${vela.imagenUrl}">`
                 : '<div class="w-full h-72 bg-gray-200 flex items-center justify-center rounded-t-lg"><span class="text-gray-500">Imagen no disponible</span></div>';
 
+            // Escapar comillas en la descripción para el atributo de datos
+            const descripcionEscapada = (vela.caracteristicas || 'Descripción no disponible.').replace(/"/g, '&quot;');
+
             card.innerHTML = `
                 ${imagenHtml}
-                <div class="p-6 flex-grow flex flex-col">
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">${vela.nombre}</h3>
-                    <p class="text-gray-600 text-sm mb-4 flex-grow">${vela.caracteristicas || 'Descripción no disponible.'}</p>
+                <div class="px-4 py-6 flex-grow flex flex-col">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2 flex-grow">${vela.nombre}</h3>
+                    <button data-description="${descripcionEscapada}" class="text-sm text-indigo-600 hover:text-indigo-800 font-semibold mt-2 mb-4 focus:outline-none self-start">Más detalles</button>
                     <div class="mt-auto">
                         <p class="text-2xl font-extrabold text-gray-900 text-center mb-4">$${precioVentaMinorista.toFixed(2)} MXN</p>
-                        <a href="https://wa.me/5211234567890?text=Hola,%20me%20interesa%20el%20producto%20'${encodeURIComponent(vela.nombre)}'" target="_blank" rel="noopener noreferrer" class="block w-full text-center bg-green-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-600 transition-colors duration-300">
+                        <a href="https://wa.me/5211234567890?text=Hola,%20me%20interesa%20el%20producto%20'${encodeURIComponent(vela.nombre)}'" target="_blank" rel="noopener noreferrer" class="block w-full text-center bg-green-500 text-white font-bold py-2 px-3 text-sm rounded-lg hover:bg-green-600 transition-colors duration-300">
                             Contactar por WhatsApp
                         </a>
                     </div>
@@ -177,23 +185,38 @@ document.addEventListener('DOMContentLoaded', function() {
         actualizarVistaCatalogo();
     });
 
+    // --- Event Listeners para Modales ---
     catalogoClientesContainer.addEventListener('click', function(e) {
+        // Modal de Imagen
         if (e.target && e.target.dataset.src) {
             imageModalContent.src = e.target.dataset.src;
             imageModalOverlay.classList.remove('hidden');
         }
+        // Modal de Detalles
+        if (e.target && e.target.dataset.description) {
+            detailsModalContent.textContent = e.target.dataset.description;
+            detailsModalOverlay.classList.remove('hidden');
+        }
     });
 
-    function closeModal() {
+    function closeImageModal() {
         imageModalOverlay.classList.add('hidden');
         imageModalContent.src = '';
     }
 
-    imageModalClose.addEventListener('click', closeModal);
-    imageModalOverlay.addEventListener('click', function(e) {
-        if (e.target === imageModalOverlay) {
-            closeModal();
-        }
+    function closeDetailsModal() {
+        detailsModalOverlay.classList.add('hidden');
+        detailsModalContent.textContent = '';
+    }
+
+    imageModalClose.addEventListener('click', closeImageModal);
+    imageModalOverlay.addEventListener('click', (e) => {
+        if (e.target === imageModalOverlay) closeImageModal();
+    });
+
+    detailsModalClose.addEventListener('click', closeDetailsModal);
+    detailsModalOverlay.addEventListener('click', (e) => {
+        if (e.target === detailsModalOverlay) closeDetailsModal();
     });
 
     // =================================================================
