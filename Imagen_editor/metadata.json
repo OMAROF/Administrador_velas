@@ -1,0 +1,5 @@
+{
+  "name": "AI Image Editor",
+  "description": "An application to edit images using a primary photo, reference images, and text prompts powered by the Gemini API.",
+  "requestFramePermissions": []
+}
