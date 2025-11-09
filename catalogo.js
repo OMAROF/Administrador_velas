@@ -344,6 +344,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 showModalSlide(prevIndex);
             });
         }
+
+        // --- Swipe Functionality ---
+        const galleryWrapper = document.getElementById('modal-gallery-wrapper');
+        let touchstartX = 0;
+        let touchendX = 0;
+
+        function handleGesture() {
+            if (touchendX < touchstartX - 50) { // Swiped left
+                const nextIndex = (currentIndex + 1) % totalSlides;
+                showModalSlide(nextIndex);
+            }
+            if (touchendX > touchstartX + 50) { // Swiped right
+                const prevIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+                showModalSlide(prevIndex);
+            }
+        }
+
+        galleryWrapper.addEventListener('touchstart', e => {
+            touchstartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        galleryWrapper.addEventListener('touchend', e => {
+            touchendX = e.changedTouches[0].screenX;
+            handleGesture();
+        });
     }
 
     // --- Event Listeners para Modales ---
@@ -366,6 +391,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     imageModalClose.addEventListener('click', closeImageModal);
+    imageModalClose.addEventListener('touchend', closeImageModal);
     imageModalOverlay.addEventListener('click', (e) => {
         if (e.target === imageModalOverlay) closeImageModal();
     });

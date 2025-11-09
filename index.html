@@ -666,6 +666,17 @@
                                     <input type="text" id="insumo-nombre" class="input-field" required>
                                 </div>
                                 <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Imagen (Opcional)</label>
+                                    <div id="insumo-imagen-container" class="relative mt-1 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center min-h-32">
+                                        <input type="file" id="insumo-imagen-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*">
+                                        <img id="insumo-imagen-preview" src="" alt="Vista previa" class="absolute inset-0 w-full h-full object-cover rounded-lg hidden">
+                                        <div id="insumo-imagen-placeholder" class="text-gray-500">
+                                            <svg class="mx-auto h-12 w-12" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 0 0-4 4v20m32-12v8m0 0v8a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4v-4m32-4l-3.172-3.172a4 4 0 0 0-5.656 0L28 28M8 32l9.172-9.172a4 4 0 0 1 5.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                            <p class="mt-1 text-sm">Click para subir</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
                                     <label for="insumo-precio" class="block text-sm font-medium text-gray-700 mb-1">Precio (por g/ml/pz)</label>
                                     <input type="number" id="insumo-precio" step="0.01" class="input-field" required>
                                 </div>
@@ -695,6 +706,7 @@
                                 <table class="min-w-full divide-y divide-gray-200">
                                     <thead class="table-header sticky top-0">
                                         <tr>
+                                            <th class="px-4 py-3 text-left text-xs font-medium tracking-wider">Imagen</th>
                                             <th class="px-4 py-3 text-left text-xs font-medium tracking-wider">Nombre</th>
                                             <th class="px-4 py-3 text-left text-xs font-medium tracking-wider">Precio</th>
                                             <th class="px-4 py-3 text-left text-xs font-medium tracking-wider">Categoría</th>
@@ -1926,7 +1938,7 @@
             function renderInsumos(insumosParaRenderizar = productos) {
                 tablaInsumos.innerHTML = '';
                 if (!insumosParaRenderizar || insumosParaRenderizar.length === 0) {
-                    tablaInsumos.innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No se encontraron insumos con los filtros actuales.</td></tr>`;
+                    tablaInsumos.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No se encontraron insumos con los filtros actuales.</td></tr>`;
                     return;
                 }
 
@@ -1940,7 +1952,12 @@
 
                 insumosOrdenados.forEach(insumo => {
                     const tr = document.createElement('tr');
+                    const imagenHtml = insumo.imagenUrl
+                        ? `<img src="${insumo.imagenUrl}" alt="${insumo.nombre}" class="w-12 h-12 object-cover rounded-md">`
+                        : `<div class="w-12 h-12 bg-gray-200 rounded-md flex items-center justify-center text-xs text-gray-500">Sin foto</div>`;
+
                     tr.innerHTML = `
+                        <td class="px-4 py-2">${imagenHtml}</td>
                         <td class="px-4 py-2 font-medium">${insumo.nombre}</td>
                         <td class="px-4 py-2">$${insumo.precio_por_gramo.toFixed(2)}</td>
                         <td class="px-4 py-2">${insumo.categoria}</td>
@@ -1958,6 +1975,15 @@
                 inputInsumoId.value = '';
                 formInsumoTitulo.textContent = 'Agregar Nuevo Insumo';
                 btnCancelarEdicionInsumo.classList.add('hidden');
+
+                // Resetear la vista previa de la imagen del insumo
+                const preview = document.getElementById('insumo-imagen-preview');
+                const placeholder = document.getElementById('insumo-imagen-placeholder');
+                const input = document.getElementById('insumo-imagen-input');
+                input.value = ''; // Limpiar el input de archivo
+                preview.src = '';
+                preview.classList.add('hidden');
+                placeholder.classList.remove('hidden');
             }
 
             function descargarRespaldoDatos() {
@@ -2186,6 +2212,21 @@
                 inputExcel.click();
             });
 
+            document.getElementById('insumo-imagen-input').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                const preview = document.getElementById('insumo-imagen-preview');
+                const placeholder = document.getElementById('insumo-imagen-placeholder');
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        preview.src = event.target.result;
+                        preview.classList.remove('hidden');
+                        placeholder.classList.add('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
             inputExcel.addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (file) {
@@ -2194,34 +2235,80 @@
                 e.target.value = ''; // Reset input to allow re-uploading the same file
             });
 
-            formInsumo.addEventListener('submit', (e) => {
+            formInsumo.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 if (!currentUser) return;
-                const insumo = { nombre: inputInsumoNombre.value, precio_por_gramo: parseFloat(inputInsumoPrecio.value), categoria: inputInsumoCategoria.value };
-                const id = inputInsumoId.value;
-                if (id) { // Actualizar
-                    db.collection('usuarios').doc(currentUser.uid).collection('insumos').doc(id).update(insumo).then(() => {
+
+                btnGuardarInsumo.disabled = true;
+                btnGuardarInsumo.textContent = 'Guardando...';
+
+                try {
+                    const insumoData = { 
+                        nombre: inputInsumoNombre.value, 
+                        precio_por_gramo: parseFloat(inputInsumoPrecio.value), 
+                        categoria: inputInsumoCategoria.value 
+                    };
+                    const id = inputInsumoId.value;
+                    const fileInput = document.getElementById('insumo-imagen-input');
+                    const file = fileInput.files[0];
+                    let imageUrl = null;
+
+                    if (id) { // --- Lógica de Actualización ---
+                        const insumoOriginal = productos.find(p => p.id === id);
+                        imageUrl = insumoOriginal.imagenUrl || null;
+
+                        if (file) { // Si se sube una nueva imagen
+                            // Borrar la imagen antigua si existía
+                            if (imageUrl) {
+                                try {
+                                    await storage.refFromURL(imageUrl).delete();
+                                } catch (imgError) {
+                                    console.warn("No se pudo borrar la imagen antigua:", imgError);
+                                }
+                            }
+                            // Subir la nueva imagen
+                            const filePath = `usuarios/${currentUser.uid}/insumos_imagenes/${Date.now()}_${file.name}`;
+                            const fileRef = storage.ref(filePath);
+                            await fileRef.put(file);
+                            imageUrl = await fileRef.getDownloadURL();
+                        }
+                        
+                        insumoData.imagenUrl = imageUrl;
+                        await db.collection('usuarios').doc(currentUser.uid).collection('insumos').doc(id).update(insumoData);
+                        
                         const index = productos.findIndex(p => p.id === id);
-                        productos[index] = { id, ...insumo };
-                        resetFormInsumo();
-                        poblarFiltroCategorias();
-                        filtrarYRenderizarInsumos();
-                        poblarSelectorIngredientes();
-                    }).catch(err => console.error("Error al actualizar insumo: ", err));
-                } else { // Crear
-                    db.collection('usuarios').doc(currentUser.uid).collection('insumos').add(insumo).then(docRef => {
-                        productos.push({ id: docRef.id, ...insumo });
-                        resetFormInsumo();
-                        poblarFiltroCategorias();
-                        filtrarYRenderizarInsumos();
-                        poblarSelectorIngredientes();
-                    }).catch(err => console.error("Error al agregar insumo: ", err));
+                        productos[index] = { id, ...insumoData };
+
+                    } else { // --- Lógica de Creación ---
+                        if (file) {
+                            const filePath = `usuarios/${currentUser.uid}/insumos_imagenes/${Date.now()}_${file.name}`;
+                            const fileRef = storage.ref(filePath);
+                            await fileRef.put(file);
+                            imageUrl = await fileRef.getDownloadURL();
+                        }
+                        insumoData.imagenUrl = imageUrl;
+                        const docRef = await db.collection('usuarios').doc(currentUser.uid).collection('insumos').add(insumoData);
+                        productos.push({ id: docRef.id, ...insumoData });
+                    }
+
+                    resetFormInsumo();
+                    poblarFiltroCategorias();
+                    filtrarYRenderizarInsumos();
+                    poblarSelectorIngredientes();
+
+                } catch (error) {
+                    console.error("Error al guardar insumo: ", error);
+                    alert("Hubo un error al guardar el insumo.");
+                } finally {
+                    btnGuardarInsumo.disabled = false;
+                    btnGuardarInsumo.textContent = 'Guardar';
                 }
             });
 
-            tablaInsumos.addEventListener('click', (e) => {
+            tablaInsumos.addEventListener('click', async (e) => {
                 const id = e.target.dataset.id;
                 if (!id) return;
+
                 if (e.target.classList.contains('btn-editar-insumo')) {
                     const insumo = productos.find(p => p.id === id);
                     if (insumo) {
@@ -2231,16 +2318,43 @@
                         inputInsumoPrecio.value = insumo.precio_por_gramo;
                         inputInsumoCategoria.value = insumo.categoria;
                         btnCancelarEdicionInsumo.classList.remove('hidden');
+
+                        // Poblar la vista previa de la imagen
+                        const preview = document.getElementById('insumo-imagen-preview');
+                        const placeholder = document.getElementById('insumo-imagen-placeholder');
+                        if (insumo.imagenUrl) {
+                            preview.src = insumo.imagenUrl;
+                            preview.classList.remove('hidden');
+                            placeholder.classList.add('hidden');
+                        } else {
+                            preview.src = '';
+                            preview.classList.add('hidden');
+                            placeholder.classList.remove('hidden');
+                        }
                     }
                 }
                 if (e.target.classList.contains('btn-eliminar-insumo')) {
                     if (confirm('¿Estás seguro de que quieres eliminar este insumo?')) {
-                        db.collection('usuarios').doc(currentUser.uid).collection('insumos').doc(id).delete().then(() => {
+                        try {
+                            const insumo = productos.find(p => p.id === id);
+                            
+                            // Borrar imagen de Storage si existe
+                            if (insumo && insumo.imagenUrl) {
+                                await storage.refFromURL(insumo.imagenUrl).delete();
+                            }
+
+                            // Borrar documento de Firestore
+                            await db.collection('usuarios').doc(currentUser.uid).collection('insumos').doc(id).delete();
+                            
                             productos = productos.filter(p => p.id !== id);
                             poblarFiltroCategorias();
                             filtrarYRenderizarInsumos();
                             poblarSelectorIngredientes();
-                        }).catch(err => console.error("Error al eliminar insumo: ", err));
+
+                        } catch (error) {
+                            console.error("Error al eliminar insumo: ", error);
+                            alert("Hubo un error al eliminar el insumo. Es posible que la imagen no se haya borrado si ya no existía.");
+                        }
                     }
                 }
             });
