@@ -157,7 +157,7 @@
         .gallery-dot.active {
             background-color: white;
         }
-        #modal-gallery-wrapper {
+        #modal-slides-container, #modal-slides-container .gallery-slide {
             border-radius: 0.75rem;
             overflow: hidden;
         }
@@ -191,7 +191,7 @@
     <!-- Modal para imagen ampliada -->
     <div id="image-modal-overlay" class="modal-overlay hidden p-4">
         <span id="image-modal-close" class="modal-close-btn">&times;</span>
-        <div id="modal-gallery-wrapper" class="relative w-full h-full max-w-4xl max-h-4xl flex items-center justify-center" style="border-radius: 0.75rem; overflow: hidden;">
+        <div id="modal-gallery-wrapper" class="relative w-full h-full max-w-4xl max-h-4xl flex items-center justify-center">
             <div id="modal-slides-container" class="w-full h-full relative">
                 <!-- Slides se insertarán aquí -->
             </div>
