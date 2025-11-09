@@ -312,9 +312,45 @@
                                 </datalist>
                             </div>
                             <div>
-                                <label for="receta-imagen" class="block text-sm font-medium text-gray-700 mb-1">Foto del Producto</label>
-                                <input type="file" id="receta-imagen" class="input-field" accept="image/*">
-                                <img id="imagen-preview" src="" alt="Vista previa de la imagen" class="mt-4 rounded-lg max-h-48 hidden"/>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Fotos del Producto (hasta 4)</label>
+                                <div id="contenedor-imagenes" class="grid grid-cols-2 gap-4 mt-2">
+                                    <!-- Contenedor para Imagen 1 -->
+                                    <div class="relative border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                        <input type="file" id="receta-imagen-1" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*" data-index="1">
+                                        <img id="imagen-preview-1" src="" alt="Vista previa 1" class="absolute inset-0 w-full h-full object-cover rounded-lg hidden">
+                                        <div id="placeholder-1" class="text-gray-500">
+                                            <svg class="mx-auto h-12 w-12" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                            <p class="mt-1 text-sm">Click para subir</p>
+                                        </div>
+                                    </div>
+                                    <!-- Contenedor para Imagen 2 -->
+                                    <div class="relative border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                        <input type="file" id="receta-imagen-2" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*" data-index="2">
+                                        <img id="imagen-preview-2" src="" alt="Vista previa 2" class="absolute inset-0 w-full h-full object-cover rounded-lg hidden">
+                                        <div id="placeholder-2" class="text-gray-500">
+                                            <svg class="mx-auto h-12 w-12" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4-0-015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                            <p class="mt-1 text-sm">Click para subir</p>
+                                        </div>
+                                    </div>
+                                    <!-- Contenedor para Imagen 3 -->
+                                    <div class="relative border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                        <input type="file" id="receta-imagen-3" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*" data-index="3">
+                                        <img id="imagen-preview-3" src="" alt="Vista previa 3" class="absolute inset-0 w-full h-full object-cover rounded-lg hidden">
+                                        <div id="placeholder-3" class="text-gray-500">
+                                            <svg class="mx-auto h-12 w-12" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4-0-01-4 4H12a4 4-0-01-4-4v-4m32-4l-3.172-3.172a4 4-0-00-5.656 0L28 28M8 32l9.172-9.172a4 4-0-015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                            <p class="mt-1 text-sm">Click para subir</p>
+                                        </div>
+                                    </div>
+                                    <!-- Contenedor para Imagen 4 -->
+                                    <div class="relative border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                                        <input type="file" id="receta-imagen-4" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*" data-index="4">
+                                        <img id="imagen-preview-4" src="" alt="Vista previa 4" class="absolute inset-0 w-full h-full object-cover rounded-lg hidden">
+                                        <div id="placeholder-4" class="text-gray-500">
+                                            <svg class="mx-auto h-12 w-12" stroke="currentColor" fill="none" viewBox="0.0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4-0-015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                            <p class="mt-1 text-sm">Click para subir</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1103,14 +1139,17 @@
                         return;
                     }
 
-                    let imagenUrl = null;
-                    const file = inputRecetaImagen.files[0];
-
-                    if (file) {
-                        const filePath = `usuarios/${currentUser.uid}/catalogo_imagenes/${Date.now()}_${file.name}`;
-                        const fileRef = storage.ref(filePath);
-                        await fileRef.put(file);
-                        imagenUrl = await fileRef.getDownloadURL();
+                    const imagenUrls = [];
+                    for (let i = 1; i <= 4; i++) {
+                        const fileInput = document.getElementById(`receta-imagen-${i}`);
+                        const file = fileInput.files[0];
+                        if (file) {
+                            const filePath = `usuarios/${currentUser.uid}/catalogo_imagenes/${Date.now()}_${file.name}`;
+                            const fileRef = storage.ref(filePath);
+                            await fileRef.put(file);
+                            const url = await fileRef.getDownloadURL();
+                            imagenUrls.push(url);
+                        }
                     }
 
                     const categorias = inputRecetaCategoria.value.split(',').map(c => c.trim()).filter(c => c);
@@ -1125,7 +1164,7 @@
                         margenGananciaMinorista: parseFloat(inputGananciaMinorista.value) || 0,
                         margenGananciaMayorista: parseFloat(inputGananciaMayorista.value) || 0,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        ...(imagenUrl && { imagenUrl: imagenUrl })
+                        imagenUrls: imagenUrls
                     };
 
                     const docRef = await db.collection('usuarios').doc(currentUser.uid).collection('catalogo').add(nuevaVela);
@@ -1188,8 +1227,8 @@
                     const precioVentaMinorista = costoTotal * (1 + (vela.margenGananciaMinorista || 0) / 100);
                     const precioVentaMayorista = costoTotal * (1 + (vela.margenGananciaMayorista || 0) / 100);
 
-                    const imagenHtml = vela.imagenUrl 
-                        ? `<img src="${vela.imagenUrl}" alt="${vela.nombre}" class="w-full h-48 object-cover rounded-t-lg mb-4">`
+                    const imagenHtml = vela.imagenUrls && vela.imagenUrls.length > 0
+                        ? `<img src="${vela.imagenUrls[0]}" alt="${vela.nombre}" class="w-full h-48 object-cover rounded-t-lg mb-4">`
                         : '<div class="w-full h-48 bg-gray-200 rounded-t-lg flex items-center justify-center mb-4"><span class="text-gray-500 text-sm">Sin imagen</span></div>';
 
                     const categoriasHtml = Array.isArray(vela.categoria) && vela.categoria.length > 0
@@ -1285,9 +1324,20 @@
                 const vela = catalogo.find(v => v.id === id);
                 if (!vela) return;
 
-                const imagenPreviewHtml = vela.imagenUrl
-                    ? `<div class="w-full flex justify-center mb-4"><img id="modal-imagen-preview" src="${vela.imagenUrl}" alt="${vela.nombre}" class="max-h-48 rounded-lg"></div>`
-                    : `<div class="w-full flex justify-center mb-4"><img id="modal-imagen-preview" src="" alt="Vista previa" class="max-h-48 rounded-lg hidden"></div>`;
+                let imagesHtml = '';
+                for (let i = 0; i < 4; i++) {
+                    const imageUrl = vela.imagenUrls && vela.imagenUrls[i] ? vela.imagenUrls[i] : '';
+                    imagesHtml += `
+                        <div class="relative border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                            <input type="file" id="modal-receta-imagen-${i + 1}" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*" data-index="${i + 1}">
+                            <img id="modal-imagen-preview-${i + 1}" src="${imageUrl}" alt="Vista previa ${i + 1}" class="absolute inset-0 w-full h-full object-cover rounded-lg ${imageUrl ? '' : 'hidden'}">
+                            <div id="modal-placeholder-${i + 1}" class="text-gray-500 ${imageUrl ? 'hidden' : ''}">
+                                <svg class="mx-auto h-12 w-12" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                <p class="mt-1 text-sm">Click para subir</p>
+                            </div>
+                        </div>
+                    `;
+                }
 
                 let recetaHtml = vela.receta.map((item, index) => `<tr><td class="px-4 py-2">${item.nombre}</td><td class="px-4 py-2"><input type="number" value="${item.cantidad}" class="input-field w-24" data-receta-index="${index}"></td><td class="px-4 py-2">$${item.costo.toFixed(2)}</td></tr>`).join('');
                 let gastosHtml = vela.gastosAdicionales.map((gasto, index) => `<tr><td class="px-4 py-2"><input type="text" value="${gasto.descripcion}" class="input-field w-full" data-gasto-desc-index="${index}"></td><td class="px-4 py-2"><input type="number" value="${gasto.monto}" class="input-field w-24" data-gasto-monto-index="${index}"></td></tr>`).join('');
@@ -1297,10 +1347,11 @@
                 const categoriasStr = Array.isArray(vela.categoria) ? vela.categoria.join(', ') : (vela.categoria || '');
 
                 modalContent.innerHTML = `
-                    ${imagenPreviewHtml}
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Cambiar Foto del Producto</label>
-                        <input type="file" id="modal-receta-imagen" class="input-field" accept="image/*">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Fotos del Producto</label>
+                        <div class="grid grid-cols-2 gap-4 mt-2">
+                            ${imagesHtml}
+                        </div>
                     </div>
                     <div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-1">Nombre del Producto</label><input type="text" id="modal-nombre-producto" class="input-field w-full text-2xl font-bold" value="${vela.nombre}"></div>
                     <div class="mb-4"><label class="block text-sm font-medium text-gray-700 mb-1">Características</label><textarea id="modal-caracteristicas" class="input-field w-full" rows="2">${vela.caracteristicas || ''}</textarea></div>
@@ -1325,25 +1376,28 @@
                     </div>
                     <div class="flex justify-end gap-4 mt-6">
                         <button class="btn-neutral btn-cancelar-modal">Cancelar</button>
-                        ${vela.imagenUrl ? `<button class="btn-secondary btn-ver-imagen-completa" data-imagen-url="${vela.imagenUrl}">Ver Imagen</button>` : ''}
                         <button class="btn-primary btn-guardar-cambios" data-id="${vela.id}">Guardar Cambios</button>
                     </div>
 
                 `;
                 modalOverlay.classList.remove('hidden');
 
-                document.getElementById('modal-receta-imagen').addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    const preview = document.getElementById('modal-imagen-preview');
-                    if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                            preview.src = event.target.result;
-                            preview.classList.remove('hidden');
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                });
+                for (let i = 1; i <= 4; i++) {
+                    document.getElementById(`modal-receta-imagen-${i}`).addEventListener('change', (e) => {
+                        const file = e.target.files[0];
+                        const preview = document.getElementById(`modal-imagen-preview-${i}`);
+                        const placeholder = document.getElementById(`modal-placeholder-${i}`);
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                                preview.src = event.target.result;
+                                preview.classList.remove('hidden');
+                                placeholder.classList.add('hidden');
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                }
             }
 
             async function guardarCambios(id) {
@@ -1359,26 +1413,30 @@
                     const velaOriginal = catalogo[velaIndex];
                     const velaActualizada = { ...velaOriginal };
 
-                    // Handle image update
-                    const fileInput = document.getElementById('modal-receta-imagen');
-                    const file = fileInput.files[0];
+                    const newImageUrls = [...(velaOriginal.imagenUrls || [])];
 
-                    if (file) {
-                        // Upload new image
-                        const filePath = `usuarios/${currentUser.uid}/catalogo_imagenes/${Date.now()}_${file.name}`;
-                        const fileRef = storage.ref(filePath);
-                        await fileRef.put(file);
-                        velaActualizada.imagenUrl = await fileRef.getDownloadURL();
+                    for (let i = 1; i <= 4; i++) {
+                        const fileInput = document.getElementById(`modal-receta-imagen-${i}`);
+                        const file = fileInput.files[0];
 
-                        // Delete old image if it exists
-                        if (velaOriginal.imagenUrl) {
-                            try {
-                                await storage.refFromURL(velaOriginal.imagenUrl).delete();
-                            } catch (imgError) {
-                                console.warn("No se pudo borrar la imagen anterior, puede que ya no exista:", imgError);
+                        if (file) {
+                            // If there was an old image at this position, delete it
+                            if (velaOriginal.imagenUrls && velaOriginal.imagenUrls[i - 1]) {
+                                try {
+                                    await storage.refFromURL(velaOriginal.imagenUrls[i - 1]).delete();
+                                } catch (imgError) {
+                                    console.warn(`No se pudo borrar la imagen anterior en la posición ${i}:`, imgError);
+                                }
                             }
+
+                            // Upload new image
+                            const filePath = `usuarios/${currentUser.uid}/catalogo_imagenes/${Date.now()}_${file.name}`;
+                            const fileRef = storage.ref(filePath);
+                            await fileRef.put(file);
+                            newImageUrls[i - 1] = await fileRef.getDownloadURL();
                         }
                     }
+                    velaActualizada.imagenUrls = newImageUrls.filter(url => url); // Remove any empty spots
 
                     velaActualizada.nombre = document.getElementById('modal-nombre-producto').value.trim();
                     velaActualizada.caracteristicas = document.getElementById('modal-caracteristicas').value.trim();
@@ -1949,9 +2007,14 @@
                 inputRecetaNombre.value = '';
                 inputRecetaCaracteristicas.value = '';
                 inputRecetaCategoria.value = '';
-                inputRecetaImagen.value = '';
-                imagenPreview.classList.add('hidden');
-                imagenPreview.src = '';
+                for (let i = 1; i <= 4; i++) {
+                    document.getElementById(`receta-imagen-${i}`).value = '';
+                    const preview = document.getElementById(`imagen-preview-${i}`);
+                    const placeholder = document.getElementById(`placeholder-${i}`);
+                    preview.src = '';
+                    preview.classList.add('hidden');
+                    placeholder.classList.remove('hidden');
+                }
                 renderizarReceta();
                 renderizarGastos();
             });
@@ -1961,6 +2024,29 @@
             inputGastoPerdidaPct.addEventListener('input', calcularTotales);
             inputGastoProduccionPct.addEventListener('input', calcularTotales);
             btnGuardarCatalogo.addEventListener('click', guardarEnCatalogo);
+
+            for (let i = 1; i <= 4; i++) {
+                const input = document.getElementById(`receta-imagen-${i}`);
+                const preview = document.getElementById(`imagen-preview-${i}`);
+                const placeholder = document.getElementById(`placeholder-${i}`);
+
+                input.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            preview.src = event.target.result;
+                            preview.classList.remove('hidden');
+                            placeholder.classList.add('hidden');
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        preview.src = '';
+                        preview.classList.add('hidden');
+                        placeholder.classList.remove('hidden');
+                    }
+                });
+            }
 
             inputRecetaImagen.addEventListener('change', (e) => {
                 const file = e.target.files[0];

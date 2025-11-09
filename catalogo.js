@@ -66,15 +66,31 @@ document.addEventListener('DOMContentLoaded', function() {
             let precioVentaMinorista = costoTotal * (1 + (vela.margenGananciaMinorista || 0) / 100);
             precioVentaMinorista = Math.ceil(precioVentaMinorista);
 
-            const imagenHtml = vela.imagenUrl 
-                ? `<img src="${vela.imagenUrl}" alt="${vela.nombre}" class="w-full h-72 object-cover rounded-t-lg shadow-sm cursor-pointer" data-src="${vela.imagenUrl}">`
-                : '<div class="w-full h-72 bg-gray-200 flex items-center justify-center rounded-t-lg"><span class="text-gray-500">Imagen no disponible</span></div>';
+            let imageGalleryHtml = '';
+            if (vela.imagenUrls && vela.imagenUrls.length > 0) {
+                const images = vela.imagenUrls.map((url, index) => 
+                    `<div class="gallery-slide ${index === 0 ? 'active' : ''}" style="background-image: url('${url}');"></div>`
+                ).join('');
+                const dots = vela.imagenUrls.map((_, index) => 
+                    `<span class="gallery-dot ${index === 0 ? 'active' : ''}" data-slide-to="${index}"></span>`
+                ).join('');
 
-            // Escapar comillas en la descripción para el atributo de datos
+                imageGalleryHtml = `
+                    <div class="gallery-container" data-vela-id="${vela.id}">
+                        <div class="gallery-slides">${images}</div>
+                        <button class="gallery-prev">&lt;</button>
+                        <button class="gallery-next">&gt;</button>
+                        <div class="gallery-dots">${dots}</div>
+                    </div>
+                `;
+            } else {
+                imageGalleryHtml = '<div class="w-full h-72 bg-gray-200 flex items-center justify-center rounded-t-lg"><span class="text-gray-500">Imagen no disponible</span></div>';
+            }
+
             const descripcionEscapada = (vela.caracteristicas || 'Descripción no disponible.').replace(/"/g, '&quot;');
 
             card.innerHTML = `
-                ${imagenHtml}
+                ${imageGalleryHtml}
                 <div class="px-4 py-6 flex-grow flex flex-col">
                     <h3 class="text-xl font-bold text-gray-900 mb-2 flex-grow">${vela.nombre}</h3>
                     <button data-description="${descripcionEscapada}" class="text-sm text-indigo-600 hover:text-indigo-800 font-semibold mt-2 mb-4 focus:outline-none self-start">Más detalles</button>
@@ -87,6 +103,52 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
             catalogoClientesContainer.appendChild(card);
+        });
+
+        setupGalleries();
+    }
+
+    function setupGalleries() {
+        const galleries = document.querySelectorAll('.gallery-container');
+        galleries.forEach(gallery => {
+            let currentIndex = 0;
+            const slides = gallery.querySelectorAll('.gallery-slide');
+            const dots = gallery.querySelectorAll('.gallery-dot');
+            const totalSlides = slides.length;
+
+            if (totalSlides <= 1) {
+                gallery.querySelector('.gallery-prev').style.display = 'none';
+                gallery.querySelector('.gallery-next').style.display = 'none';
+                gallery.querySelector('.gallery-dots').style.display = 'none';
+                return;
+            }
+
+            function showSlide(index) {
+                slides.forEach((slide, i) => {
+                    slide.classList.toggle('active', i === index);
+                });
+                dots.forEach((dot, i) => {
+                    dot.classList.toggle('active', i === index);
+                });
+                currentIndex = index;
+            }
+
+            gallery.querySelector('.gallery-next').addEventListener('click', () => {
+                const nextIndex = (currentIndex + 1) % totalSlides;
+                showSlide(nextIndex);
+            });
+
+            gallery.querySelector('.gallery-prev').addEventListener('click', () => {
+                const prevIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+                showSlide(prevIndex);
+            });
+
+            dots.forEach(dot => {
+                dot.addEventListener('click', (e) => {
+                    const slideIndex = parseInt(e.target.dataset.slideTo, 10);
+                    showSlide(slideIndex);
+                });
+            });
         });
     }
 
