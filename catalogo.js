@@ -301,7 +301,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!modalSlidesContainer) return;
 
         modalSlidesContainer.innerHTML = imageUrls.map((url, index) => 
-            `<div class="gallery-slide ${index === startIndex ? 'active' : ''}" style="background-image: url('${url}');"></div>`
+            `<div class="gallery-slide ${index === startIndex ? 'active' : ''}"><img src="${url}" class="w-full h-full object-contain rounded-lg"></div>`
         ).join('');
         
         imageModalOverlay.classList.remove('hidden');
