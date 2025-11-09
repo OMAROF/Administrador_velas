@@ -1340,7 +1340,7 @@
                 for (let i = 0; i < 4; i++) {
                     const imageUrl = vela.imagenUrls && vela.imagenUrls[i] ? vela.imagenUrls[i] : '';
                     imagesHtml += `
-                        <div class="relative border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                        <div class="relative border-2 border-dashed border-gray-300 rounded-lg p-4 text-center min-h-32">
                             <input type="file" id="modal-receta-imagen-${i + 1}" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*" data-index="${i + 1}">
                             <img id="modal-imagen-preview-${i + 1}" src="${imageUrl}" alt="Vista previa ${i + 1}" class="absolute inset-0 w-full h-full object-cover rounded-lg ${imageUrl ? '' : 'hidden'}">
                             <div id="modal-placeholder-${i + 1}" class="text-gray-500 ${imageUrl ? 'hidden' : ''}">
