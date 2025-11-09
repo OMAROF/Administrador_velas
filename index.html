@@ -753,6 +753,18 @@
         </div>
     </div>
 
+    <!-- Modal para Confirmación de Borrado de Imagen -->
+    <div id="confirmar-borrado-modal-overlay" class="modal-overlay hidden">
+        <div class="modal-content relative w-auto">
+            <h3 class="text-lg font-bold mb-4">Confirmar Eliminación</h3>
+            <p id="confirmar-borrado-mensaje">¿Estás seguro de que quieres eliminar esta imagen? Esta acción no se puede deshacer.</p>
+            <div class="flex justify-end gap-4 mt-6">
+                <button id="btn-cancelar-borrado" class="btn-neutral">Cancelar</button>
+                <button id="btn-confirmar-borrado" class="btn-danger">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // =================================================================
@@ -1335,6 +1347,7 @@
                                 <svg class="mx-auto h-12 w-12" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 0 0-4 4v20m32-12v8m0 0v8a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4v-4m32-4l-3.172-3.172a4 4 0 0 0-5.656 0L28 28M8 32l9.172-9.172a4 4 0 0 1 5.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
                                 <p class="mt-1 text-sm">Click para subir</p>
                             </div>
+                            ${imageUrl ? `<button class="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 leading-none btn-eliminar-imagen-modal" data-vela-id="${id}" data-image-url="${imageUrl}" data-index="${i}">&times;</button>` : ''}
                         </div>
                     `;
                 }
@@ -1495,6 +1508,66 @@
                 const sumaPorcentajes = (pctPerdida + pctProduccion) / 100;
                 const costoBase = costoIngredientes + costoGastosManuales;
                 return (sumaPorcentajes < 1) ? costoBase / (1 - sumaPorcentajes) : costoBase;
+            }
+
+            async function borrarImagenDeVela(velaId, imageUrl, index) {
+                if (!currentUser) return;
+
+                const confirmarBorradoModal = document.getElementById('confirmar-borrado-modal-overlay');
+                const btnConfirmar = document.getElementById('btn-confirmar-borrado');
+                btnConfirmar.disabled = true;
+                btnConfirmar.textContent = 'Eliminando...';
+
+                try {
+                    // 1. Borrar de Firebase Storage
+                    if (imageUrl.startsWith('https://firebasestorage.googleapis.com')) {
+                        await storage.refFromURL(imageUrl).delete();
+                    }
+
+                    // 2. Actualizar el array en Firestore
+                    const velaRef = db.collection('usuarios').doc(currentUser.uid).collection('catalogo').doc(velaId);
+                    
+                    // Usamos un valor especial para eliminar el elemento del array
+                    const updatePayload = {};
+                    updatePayload[`imagenUrls.${index}`] = firebase.firestore.FieldValue.delete();
+                    await velaRef.update(updatePayload);
+
+                    // For a more robust solution that handles shifting array elements, we can do a transaction
+                    await db.runTransaction(async (transaction) => {
+                        const doc = await transaction.get(velaRef);
+                        if (!doc.exists) { throw "Document does not exist!"; }
+                        
+                        const originalUrls = doc.data().imagenUrls || [];
+                        const newUrls = originalUrls.filter(url => url !== imageUrl);
+                        
+                        transaction.update(velaRef, { imagenUrls: newUrls });
+                    });
+
+
+                    // 3. Actualizar UI
+                    const preview = document.getElementById(`modal-imagen-preview-${parseInt(index) + 1}`);
+                    const placeholder = document.getElementById(`modal-placeholder-${parseInt(index) + 1}`);
+                    preview.src = '';
+                    preview.classList.add('hidden');
+                    placeholder.classList.remove('hidden');
+
+                    // 4. Actualizar datos locales y renderizar
+                    const velaLocalIndex = catalogo.findIndex(v => v.id === velaId);
+                    if (velaLocalIndex > -1) {
+                        catalogo[velaLocalIndex].imagenUrls = catalogo[velaLocalIndex].imagenUrls.filter(url => url !== imageUrl);
+                    }
+                    renderizarCatalogo();
+
+                    alert('Imagen eliminada con éxito.');
+
+                } catch (error) {
+                    console.error("Error al eliminar imagen: ", error);
+                    alert("Hubo un error al eliminar la imagen.");
+                } finally {
+                    confirmarBorradoModal.classList.add('hidden');
+                    btnConfirmar.disabled = false;
+                    btnConfirmar.textContent = 'Confirmar';
+                }
             }
 
             // --- Funciones de Propuestas ---
@@ -2068,9 +2141,26 @@
             modalContent.addEventListener('click', (e) => {
                 if (e.target.classList.contains('btn-guardar-cambios')) guardarCambios(e.target.dataset.id);
                 if (e.target.classList.contains('btn-cancelar-modal')) modalOverlay.classList.add('hidden');
-                if (e.target.classList.contains('btn-ver-imagen-completa')) {
-                    window.open(e.target.dataset.imagenUrl, '_blank');
+                if (e.target.classList.contains('btn-eliminar-imagen-modal')) {
+                    const velaId = e.target.dataset.velaId;
+                    const imageUrl = e.target.dataset.imageUrl;
+                    const index = e.target.dataset.index;
+                    
+                    const confirmarBorradoModal = document.getElementById('confirmar-borrado-modal-overlay');
+                    const btnConfirmar = document.getElementById('btn-confirmar-borrado');
+                    
+                    // Clonar y reemplazar para evitar listeners duplicados
+                    const newBtnConfirmar = btnConfirmar.cloneNode(true);
+                    btnConfirmar.parentNode.replaceChild(newBtnConfirmar, btnConfirmar);
+                    
+                    newBtnConfirmar.onclick = () => borrarImagenDeVela(velaId, imageUrl, index);
+                    
+                    confirmarBorradoModal.classList.remove('hidden');
                 }
+            });
+
+            document.getElementById('btn-cancelar-borrado').addEventListener('click', () => {
+                document.getElementById('confirmar-borrado-modal-overlay').classList.add('hidden');
             });
 
             // --- Propuestas
