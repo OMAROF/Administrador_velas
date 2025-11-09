@@ -157,6 +157,10 @@
         .gallery-dot.active {
             background-color: white;
         }
+        #modal-slides-container .gallery-slide {
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
     </style>
 </head>
 <body class="bg-gray-100 antialiased text-gray-800">
@@ -181,9 +185,15 @@
     </div>
 
     <!-- Modal para imagen ampliada -->
-    <div id="image-modal-overlay" class="modal-overlay hidden">
+    <div id="image-modal-overlay" class="modal-overlay hidden p-4">
         <span id="image-modal-close" class="modal-close-btn">&times;</span>
-        <img id="image-modal-content" src="" alt="Vista ampliada del producto" class="modal-content-image">
+        <div class="relative w-full h-full max-w-4xl max-h-4xl flex items-center justify-center">
+            <div id="modal-slides-container" class="w-full h-full relative">
+                <!-- Slides se insertarán aquí -->
+            </div>
+            <button id="modal-gallery-prev" class="gallery-prev absolute left-0 top-1/2 -translate-y-1/2 ml-2">&lt;</button>
+            <button id="modal-gallery-next" class="gallery-next absolute right-0 top-1/2 -translate-y-1/2 mr-2">&gt;</button>
+        </div>
     </div>
 
     <!-- Modal para detalles de texto -->

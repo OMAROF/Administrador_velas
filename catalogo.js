@@ -115,11 +115,22 @@ document.addEventListener('DOMContentLoaded', function() {
             const slides = gallery.querySelectorAll('.gallery-slide');
             const dots = gallery.querySelectorAll('.gallery-dot');
             const totalSlides = slides.length;
+            let intervalId = null;
 
             if (totalSlides <= 1) {
                 gallery.querySelector('.gallery-prev').style.display = 'none';
                 gallery.querySelector('.gallery-next').style.display = 'none';
                 gallery.querySelector('.gallery-dots').style.display = 'none';
+                
+                if (totalSlides === 1) {
+                    slides[0].addEventListener('click', () => {
+                        const velaId = gallery.dataset.velaId;
+                        const vela = catalogoPublicoCompleto.find(v => v.id === velaId);
+                        if (vela && vela.imagenUrls) {
+                            openImageModal(vela.imagenUrls, 0);
+                        }
+                    });
+                }
                 return;
             }
 
@@ -133,22 +144,53 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentIndex = index;
             }
 
-            gallery.querySelector('.gallery-next').addEventListener('click', () => {
+            function nextSlide() {
                 const nextIndex = (currentIndex + 1) % totalSlides;
                 showSlide(nextIndex);
+            }
+
+            function startSlideshow() {
+                stopSlideshow(); // Evita multiples intervalos
+                intervalId = setInterval(nextSlide, 4000);
+            }
+
+            function stopSlideshow() {
+                clearInterval(intervalId);
+            }
+
+            gallery.querySelector('.gallery-next').addEventListener('click', () => {
+                nextSlide();
+                stopSlideshow(); // Para la rotación automática si el usuario interactúa
             });
 
             gallery.querySelector('.gallery-prev').addEventListener('click', () => {
                 const prevIndex = (currentIndex - 1 + totalSlides) % totalSlides;
                 showSlide(prevIndex);
+                stopSlideshow();
             });
 
             dots.forEach(dot => {
                 dot.addEventListener('click', (e) => {
                     const slideIndex = parseInt(e.target.dataset.slideTo, 10);
                     showSlide(slideIndex);
+                    stopSlideshow();
                 });
             });
+
+            slides.forEach((slide, index) => {
+                slide.addEventListener('click', () => {
+                    const velaId = gallery.dataset.velaId;
+                    const vela = catalogoPublicoCompleto.find(v => v.id === velaId);
+                    if (vela && vela.imagenUrls) {
+                        openImageModal(vela.imagenUrls, index);
+                    }
+                });
+            });
+
+            gallery.addEventListener('mouseenter', stopSlideshow);
+            gallery.addEventListener('mouseleave', startSlideshow);
+
+            startSlideshow();
         });
     }
 
@@ -254,13 +296,58 @@ document.addEventListener('DOMContentLoaded', function() {
         actualizarVistaCatalogo();
     });
 
+    function openImageModal(imageUrls, startIndex) {
+        const modalSlidesContainer = document.getElementById('modal-slides-container');
+        if (!modalSlidesContainer) return;
+
+        modalSlidesContainer.innerHTML = imageUrls.map((url, index) => 
+            `<div class="gallery-slide ${index === startIndex ? 'active' : ''}" style="background-image: url('${url}');"></div>`
+        ).join('');
+        
+        imageModalOverlay.classList.remove('hidden');
+
+        let currentIndex = startIndex;
+        const slides = modalSlidesContainer.querySelectorAll('.gallery-slide');
+        const totalSlides = slides.length;
+
+        function showModalSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+            currentIndex = index;
+        }
+
+        // Eliminar event listeners anteriores para evitar duplicados
+        const nextBtn = document.getElementById('modal-gallery-next');
+        const prevBtn = document.getElementById('modal-gallery-prev');
+        const newNextBtn = nextBtn.cloneNode(true);
+        const newPrevBtn = prevBtn.cloneNode(true);
+        nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+        prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+
+        if (totalSlides <= 1) {
+            newNextBtn.style.display = 'none';
+            newPrevBtn.style.display = 'none';
+        } else {
+            newNextBtn.style.display = 'block';
+            newPrevBtn.style.display = 'block';
+            
+            newNextBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const nextIndex = (currentIndex + 1) % totalSlides;
+                showModalSlide(nextIndex);
+            });
+
+            newPrevBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const prevIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+                showModalSlide(prevIndex);
+            });
+        }
+    }
+
     // --- Event Listeners para Modales ---
     catalogoClientesContainer.addEventListener('click', function(e) {
-        // Modal de Imagen
-        if (e.target && e.target.dataset.src) {
-            imageModalContent.src = e.target.dataset.src;
-            imageModalOverlay.classList.remove('hidden');
-        }
         // Modal de Detalles
         if (e.target && e.target.dataset.description) {
             detailsModalContent.textContent = e.target.dataset.description;
