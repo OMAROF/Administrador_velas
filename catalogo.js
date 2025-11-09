@@ -151,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             function startSlideshow() {
                 stopSlideshow(); // Evita multiples intervalos
-                intervalId = setInterval(nextSlide, 4000);
+                intervalId = setInterval(nextSlide, 1700);
             }
 
             function stopSlideshow() {
