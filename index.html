@@ -1659,6 +1659,7 @@
                 } else { // minorista por defecto
                     precioUnitario = costoTotal * (1 + (vela.margenGananciaMinorista || 0) / 100);
                 }
+                precioUnitario = Math.ceil(precioUnitario);
 
                 propuestaActual.pedido.push({
                     id: vela.id,
