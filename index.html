@@ -1833,18 +1833,15 @@
             }
 
             async function generarPDFPropuesta() {
-                console.log("Iniciando generación de PDF...");
+                renderizarPedidoPropuesta(); // RE-CALCULAR TOTALES PARA ASEGURAR CONSISTENCIA
                 if (propuestaActual.pedido.length === 0) {
                     alert("La propuesta está vacía. Agrega al menos un producto.");
                     return;
                 }
 
-                console.log("Objeto jsPDF de la ventana:", window.jspdf);
-                console.log("Estado actual de la propuesta:", JSON.stringify(propuestaActual, null, 2));
                 try {
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF();
-                    console.log("Instancia de jsPDF creada:", doc);
 
                     // Encabezado
                     doc.setFontSize(20);
@@ -1912,7 +1909,6 @@
                         }
                     }
 
-                    console.log("Generación de PDF completada, guardando archivo...");
                     doc.save(`Propuesta-${propuestaActual.cliente.replace(/\s/g, '_')}-${new Date().toLocaleDateString('es-MX').replace(/\//g, '-')}.pdf`);
                 } catch (error) {
                     console.error("Error al generar el PDF:", error);
