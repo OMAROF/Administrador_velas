@@ -1832,9 +1832,91 @@
                 }
             }
 
-            function generarPDFPropuesta() {
-                const { jsPDF } = window.jspdf;
-                const doc = new jsPDF();
+            async function generarPDFPropuesta() {
+                console.log("Iniciando generación de PDF...");
+                if (propuestaActual.pedido.length === 0) {
+                    alert("La propuesta está vacía. Agrega al menos un producto.");
+                    return;
+                }
+
+                console.log("Objeto jsPDF de la ventana:", window.jspdf);
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    console.log("Instancia de jsPDF creada:", doc);
+
+                    // Encabezado
+                    doc.setFontSize(20);
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Propuesta de Venta", 105, 20, { align: "center" });
+
+                    // Información del Cliente y Fecha
+                    doc.setFontSize(12);
+                    doc.setFont("helvetica", "normal");
+                    doc.text(`Cliente: ${propuestaActual.cliente}`, 15, 40);
+                    doc.text(`Fecha: ${new Date(propuestaActual.fecha).toLocaleDateString('es-MX')}`, 15, 47);
+                    doc.text(`Validez: ${propuestaActual.validez} días`, 15, 54);
+
+                    // Tabla de productos
+                    const tableColumn = ["Cantidad", "Producto", "Precio Unitario", "Total"];
+                    const tableRows = [];
+
+                    propuestaActual.pedido.forEach(item => {
+                        const itemData = [
+                            item.cantidad,
+                            item.nombre,
+                            `${item.precioUnitario.toFixed(2)}`,
+                            `${item.total.toFixed(2)}`
+                        ];
+                        tableRows.push(itemData);
+                    });
+
+                    doc.autoTable({
+                        head: [tableColumn],
+                        body: tableRows,
+                        startY: 65,
+                        theme: 'grid',
+                        headStyles: { fillColor: [22, 160, 133] }
+                    });
+
+                    // Totales
+                    let finalY = doc.lastAutoTable.finalY || 80;
+                    doc.setFontSize(12);
+                    doc.setFont("helvetica", "bold");
+                    doc.text(`Subtotal: ${propuestaActual.subtotal.toFixed(2)}`, 170, finalY + 10, { align: "right" });
+                    doc.text(`Descuento (${propuestaActual.descuentoPct}%): -${propuestaActual.montoDescuento.toFixed(2)}`, 170, finalY + 17, { align: "right" });
+                    doc.text(`Total: ${propuestaActual.total.toFixed(2)}`, 170, finalY + 24, { align: "right" });
+
+                    // Notas
+                    let yNotas = finalY + 40;
+                    doc.setFontSize(10);
+                    doc.setFont("helvetica", "bold");
+                    doc.text("Notas:", 15, yNotas);
+                    doc.setFont("helvetica", "normal");
+                    const notasLines = doc.splitTextToSize(propuestaActual.notas, 180);
+                    doc.text(notasLines, 15, yNotas + 5);
+
+                    // Firma
+                    let yFirma = yNotas + notasLines.length * 5 + 15;
+                    if (propuestaActual.firmaDataUrl) {
+                        try {
+                            const imgData = propuestaActual.firmaDataUrl;
+                            doc.setFont("helvetica", "normal");
+                            doc.text("Firma de aceptación:", 15, yFirma);
+                            doc.addImage(imgData, 'PNG', 15, yFirma + 5, 60, 30);
+                            doc.text(`_________________________`, 15, yFirma + 45);
+                            doc.text(propuestaActual.firmante, 15, yFirma + 50);
+                        } catch (error) {
+                            console.error("Error al agregar la firma al PDF:", error);
+                        }
+                    }
+
+                    console.log("Generación de PDF completada, guardando archivo...");
+                    doc.save(`Propuesta-${propuestaActual.cliente.replace(/\s/g, '_')}-${new Date().toLocaleDateString('es-MX').replace(/\//g, '-')}.pdf`);
+                } catch (error) {
+                    console.error("Error al generar el PDF:", error);
+                    alert("Ocurrió un error al generar el PDF. Revisa la consola del navegador para más detalles.");
+                }
             }
 
 
