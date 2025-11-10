@@ -25,7 +25,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Modales
     const imageModalOverlay = document.getElementById('image-modal-overlay');
-    const imageModalContent = document.getElementById('image-modal-content');
     const imageModalClose = document.getElementById('image-modal-close');
     const detailsModalOverlay = document.getElementById('details-modal-overlay');
     const detailsModalContent = document.getElementById('details-modal-content');
@@ -382,7 +381,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function closeImageModal() {
         imageModalOverlay.classList.add('hidden');
-        imageModalContent.src = '';
+        const modalSlidesContainer = document.getElementById('modal-slides-container');
+        if (modalSlidesContainer) {
+            modalSlidesContainer.innerHTML = ''; // Limpia los slides para la próxima vez.
+        }
     }
 
     function closeDetailsModal() {
