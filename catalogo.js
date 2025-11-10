@@ -393,7 +393,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     imageModalClose.addEventListener('click', closeImageModal);
-    imageModalClose.addEventListener('touchend', closeImageModal);
     imageModalOverlay.addEventListener('click', (e) => {
         if (e.target === imageModalOverlay) closeImageModal();
     });
