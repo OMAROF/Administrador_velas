@@ -1674,12 +1674,6 @@
             }
 
             function renderizarPedidoPropuesta() {
-                console.log("--- renderizarPedidoPropuesta: INICIO ---");
-                try {
-                    const tbody = tablaPropuesta.querySelector('tbody');
-                    tbody.innerHTML = '';
-
-                    let subtotal = 0;
                 listaProductosPropuesta.innerHTML = '';
                 if (propuestaActual.pedido.length === 0) {
                     listaProductosPropuesta.innerHTML = `<tr id="propuesta-fila-vacia"><td colspan="5" class="px-6 py-4 text-center text-gray-500">Aún no has agregado productos.</td></tr>`;
