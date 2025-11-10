@@ -1674,6 +1674,12 @@
             }
 
             function renderizarPedidoPropuesta() {
+                console.log("--- renderizarPedidoPropuesta: INICIO ---");
+                try {
+                    const tbody = tablaPropuesta.querySelector('tbody');
+                    tbody.innerHTML = '';
+
+                    let subtotal = 0;
                 listaProductosPropuesta.innerHTML = '';
                 if (propuestaActual.pedido.length === 0) {
                     listaProductosPropuesta.innerHTML = `<tr id="propuesta-fila-vacia"><td colspan="5" class="px-6 py-4 text-center text-gray-500">Aún no has agregado productos.</td></tr>`;
@@ -1707,6 +1713,16 @@
                 elDescuentoResumen.textContent = `-$${descuento.toFixed(2)}`;
                 elEnvioResumen.textContent = `$${envio.toFixed(2)}`;
                 elTotalPropuesta.textContent = `$${total.toFixed(2)}`;
+
+                // FIX: Save totals to the state object
+                propuestaActual.costos = {
+                    subtotal: subtotal,
+                    impuestoPct: impuestoPct,
+                    montoImpuesto: montoImpuesto,
+                    descuento: descuento,
+                    envio: envio,
+                    total: total
+                };
             }
 
             function limpiarPropuesta() {
@@ -1833,7 +1849,6 @@
             }
 
             async function generarPDFPropuesta() {
-                renderizarPedidoPropuesta(); // RE-CALCULAR TOTALES PARA ASEGURAR CONSISTENCIA
                 if (propuestaActual.pedido.length === 0) {
                     alert("La propuesta está vacía. Agrega al menos un producto.");
                     return;
@@ -1880,10 +1895,14 @@
                     // Totales
                     let finalY = doc.lastAutoTable.finalY || 80;
                     doc.setFontSize(12);
+                    const costos = propuestaActual.costos;
+                    doc.text(`Subtotal: $${costos.subtotal.toFixed(2)}`, 195, finalY + 10, { align: "right" });
+                    doc.text(`Impuestos (${costos.impuestoPct}%): $${costos.montoImpuesto.toFixed(2)}`, 195, finalY + 17, { align: "right" });
+                    doc.text(`Descuento: -$${costos.descuento.toFixed(2)}`, 195, finalY + 24, { align: "right" });
+                    doc.text(`Envío: $${costos.envio.toFixed(2)}`, 195, finalY + 31, { align: "right" });
                     doc.setFont("helvetica", "bold");
-                    doc.text(`Subtotal: ${propuestaActual.subtotal.toFixed(2)}`, 170, finalY + 10, { align: "right" });
-                    doc.text(`Descuento (${propuestaActual.descuentoPct}%): -${propuestaActual.montoDescuento.toFixed(2)}`, 170, finalY + 17, { align: "right" });
-                    doc.text(`Total: ${propuestaActual.total.toFixed(2)}`, 170, finalY + 24, { align: "right" });
+                    doc.setFontSize(14);
+                    doc.text(`Total: $${costos.total.toFixed(2)}`, 195, finalY + 40, { align: "right" });
 
                     // Notas
                     let yNotas = finalY + 40;
