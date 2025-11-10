@@ -1840,6 +1840,7 @@
                 }
 
                 console.log("Objeto jsPDF de la ventana:", window.jspdf);
+                console.log("Estado actual de la propuesta:", JSON.stringify(propuestaActual, null, 2));
                 try {
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF();
