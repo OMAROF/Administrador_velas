@@ -2106,29 +2106,6 @@
                 }
             });
 
-                try {
-                    // 1. Preparar datos (solo insumos)
-                    const insumosSheet = XLSX.utils.json_to_sheet(productos.map(({ id, ...rest }) => rest));
-
-                    // 2. Crear workbook y añadir hojas (solo insumos)
-                    const wb = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(wb, insumosSheet, "Insumos");
-
-                    // 3. Generar y descargar archivo
-                    const today = new Date().toISOString().slice(0, 10);
-                    const fileName = `Respaldo_Insumos_${today}.xlsx`;
-                    XLSX.writeFile(wb, fileName);
-
-                } catch (error) {
-                    console.error("Error al generar el respaldo: ", error);
-                    alert("Hubo un error al generar el archivo de respaldo.");
-                }
-            }
-
-            // =================================================================
-            // 5. ASIGNACIÓN DE EVENT LISTENERS
-            // =================================================================
-            // --- Autenticación
             loginForm.addEventListener('submit', e => {
                 e.preventDefault();
                 auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-password').value)
@@ -2453,18 +2430,9 @@
                         inputInsumoCategoria.value = insumo.categoria;
                         btnCancelarEdicionInsumo.classList.remove('hidden');
 
-                        // Poblar la vista previa de la imagen
-                        const preview = document.getElementById('insumo-imagen-preview');
-                        const placeholder = document.getElementById('insumo-imagen-placeholder');
-                        if (insumo.imagenUrl) {
-                            preview.src = insumo.imagenUrl;
-                            preview.classList.remove('hidden');
-                            placeholder.classList.add('hidden');
-                        } else {
-                            preview.src = '';
-                            preview.classList.add('hidden');
-                            placeholder.classList.remove('hidden');
-                        }
+                        // Usar la función helper para actualizar la UI de la imagen
+                        actualizarUIVisorImagenInsumo(!!insumo.imagenUrl, insumo.imagenUrl);
+                        formInsumo.scrollIntoView({ behavior: 'smooth' });
                     }
                 }
                 if (e.target.classList.contains('btn-eliminar-insumo')) {
@@ -2494,6 +2462,20 @@
             });
 
             btnCancelarEdicionInsumo.addEventListener('click', resetFormInsumo);
+
+            // --- Listeners para la imagen de Insumo ---
+            document.getElementById('insumo-imagen-input').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        actualizarUIVisorImagenInsumo(true, event.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            document.getElementById('btn-eliminar-insumo-imagen').addEventListener('click', eliminarImagenInsumo);
 
             btnDescargarDatos.addEventListener('click', descargarRespaldoDatos);
 
