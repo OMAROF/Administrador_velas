@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let catalogoPublicoCompleto = [];
     let paginaActual = 1;
-    const itemsPorPagina = 10;
+    const itemsPorPagina = 6;
 
     // =================================================================
     // 3. DEFINICIÓN DE FUNCIONES
