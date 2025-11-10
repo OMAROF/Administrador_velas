@@ -358,17 +358,27 @@
                     <!-- Sección para agregar ingredientes -->
                     <div class="card">
                         <h2 class="text-xl font-semibold mb-4">Paso 1: Agrega los Ingredientes</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
-                            <div class="md:col-span-2">
-                                <label for="ingrediente" class="block text-sm font-medium text-gray-700 mb-1">Ingrediente</label>
-                                <select id="ingrediente" class="input-field"></select>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                            <!-- Columna Izquierda: Selector y Preview -->
+                            <div class="flex flex-col sm:flex-row gap-4 items-center">
+                                <div class="flex-grow w-full">
+                                    <label for="ingrediente" class="block text-sm font-medium text-gray-700 mb-1">Ingrediente</label>
+                                    <select id="ingrediente" class="input-field"></select>
+                                </div>
+                                <div id="ingrediente-preview-container" class="flex-shrink-0 w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 mt-2 sm:mt-0">
+                                    <img id="ingrediente-imagen-preview" src="" class="w-full h-full object-cover rounded-lg hidden">
+                                    <span id="ingrediente-imagen-placeholder" class="text-xs text-gray-500 text-center">Sin imagen</span>
+                                </div>
                             </div>
-                            <div>
-                                <label for="cantidad" class="block text-sm font-medium text-gray-700 mb-1">Cantidad (g/ml)</label>
-                                <input type="number" id="cantidad" placeholder="Ej: 100" class="input-field">
-                            </div>
-                            <div class="md:col-span-2">
-                                <button id="agregar-btn" class="btn-primary w-full">Agregar a la Receta</button>
+                            <!-- Columna Derecha: Cantidad y Botón -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+                                <div>
+                                    <label for="cantidad" class="block text-sm font-medium text-gray-700 mb-1">Cantidad (g/ml)</label>
+                                    <input type="number" id="cantidad" placeholder="Ej: 100" class="input-field">
+                                </div>
+                                <div>
+                                    <button id="agregar-btn" class="btn-primary w-full">Agregar a la Receta</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -2066,6 +2076,23 @@
             tabInsumos.addEventListener('click', () => cambiarSeccion('insumos'));
 
             // --- Calculadora
+            selectorIngrediente.addEventListener('change', () => {
+                const nombreIngrediente = selectorIngrediente.value;
+                const producto = productos.find(p => p.nombre === nombreIngrediente);
+                const preview = document.getElementById('ingrediente-imagen-preview');
+                const placeholder = document.getElementById('ingrediente-imagen-placeholder');
+
+                if (producto && producto.imagenUrl) {
+                    preview.src = producto.imagenUrl;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                } else {
+                    preview.src = '';
+                    preview.classList.add('hidden');
+                    placeholder.classList.remove('hidden');
+                }
+            });
+
             btnAgregar.addEventListener('click', () => {
                 const nombreIngrediente = selectorIngrediente.value;
                 const cantidad = parseFloat(inputCantidad.value);
