@@ -602,7 +602,7 @@
                                  <div class="mt-1 p-2 border border-gray-300 rounded-md bg-white">
                                                                          <canvas id="propuesta-firma-canvas" width="400" height="150" style="pointer-events: none; opacity: 0.5;"></canvas>                                 </div>
                                  <div class="flex justify-between items-center mt-2">
-                                                                         <input type="text" id="propuesta-firmante-nombre" placeholder="Nombre de quien firma" class="input-field w-2/3" disabled>                                    <button id="propuesta-limpiar-firma-btn" class="btn-neutral">Limpiar Firma</button>
+                                                                         <input type="text" id="propuesta-firmante-nombre" placeholder="Nombre de quien firma" class="input-field w-2/3">                                    <button id="propuesta-limpiar-firma-btn" class="btn-neutral">Limpiar Firma</button>
                                  </div>
                             </div>
                         </div>
@@ -1923,6 +1923,17 @@
                     doc.setFont("helvetica", "normal");
                     const notasLines = doc.splitTextToSize(textareaObservaciones.value, 180);
                     doc.text(notasLines, 15, yNotas + 5);
+
+                    // Firma (Physical Signature Placeholder)
+                    let yFirma = yNotas + notasLines.length * 5 + 20; // Adjust Y position
+                    doc.setFont("helvetica", "normal");
+                    doc.setFontSize(10);
+                    doc.text("Firma de aceptación:", 15, yFirma);
+                    doc.text(`_________________________`, 15, yFirma + 30); // Line for physical signature
+                    const firmanteNombre = inputPropuestaFirmanteNombre.value.trim();
+                    if (firmanteNombre) {
+                        doc.text(firmanteNombre, 15, yFirma + 35); // Print name if available
+                    }
 
                     // Filename
                     const clienteFilename = clienteNombre.replace(/\s/g, '_');
